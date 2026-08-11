@@ -69,10 +69,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] border-r border-[var(--border-soft)] bg-[#0c0c0c] lg:flex lg:flex-col">
         <div className="flex h-20 items-center px-6">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3"
-          >
+          <Link href="/dashboard" className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--primary)] text-black">
               <Scissors size={20} strokeWidth={2.2} />
             </div>
@@ -80,9 +77,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <div>
               <p className="text-[17px] font-semibold tracking-[0.12em]">
                 BARBER
-                <span className="text-[var(--primary)]">
-                  PRO
-                </span>
+                <span className="text-[var(--primary)]">PRO</span>
               </p>
 
               <p className="text-[10px] tracking-[0.18em] text-[var(--muted)]">
@@ -116,10 +111,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
                     }
                   `}
                 >
-                  <Icon
-                    size={19}
-                    strokeWidth={active ? 2.2 : 1.8}
-                  />
+                  <Icon size={19} strokeWidth={active ? 2.2 : 1.8} />
 
                   <span>{item.name}</span>
                 </Link>
@@ -144,19 +136,14 @@ export function DashboardShell({ children }: DashboardShellProps) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  Emmanuel Noleto
-                </p>
+                <p className="truncate text-sm font-medium">Emmanuel Noleto</p>
 
                 <p className="truncate text-xs text-[var(--muted)]">
                   Administrador
                 </p>
               </div>
 
-              <MoreHorizontal
-                size={17}
-                className="text-[var(--muted)]"
-              />
+              <MoreHorizontal size={17} className="text-[var(--muted)]" />
             </button>
           </div>
         </div>
@@ -181,9 +168,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
                 <span className="font-semibold">
                   BARBER
-                  <span className="text-[var(--primary)]">
-                    PRO
-                  </span>
+                  <span className="text-[var(--primary)]">PRO</span>
                 </span>
               </div>
 
@@ -226,7 +211,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 className="flex h-12 items-center gap-3 rounded-xl px-4 text-sm text-[var(--muted)]"
               >
                 <Settings size={20} />
-
                 Configurações
               </Link>
             </nav>
@@ -294,15 +278,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 href={item.href}
                 key={item.href}
                 className={`flex flex-col items-center justify-center gap-1 text-[10px] ${
-                  active
-                    ? "text-[var(--primary)]"
-                    : "text-[var(--muted)]"
+                  active ? "text-[var(--primary)]" : "text-[var(--muted)]"
                 }`}
               >
-                <Icon
-                  size={21}
-                  strokeWidth={active ? 2.3 : 1.8}
-                />
+                <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />
 
                 {item.name}
               </Link>
@@ -314,7 +293,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
             className="flex flex-col items-center justify-center gap-1 text-[10px] text-[var(--muted)]"
           >
             <MoreHorizontal size={21} />
-
             Mais
           </button>
         </nav>

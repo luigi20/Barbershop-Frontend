@@ -96,7 +96,6 @@ export default function DashboardPage() {
 
         <button className="hidden h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-black transition hover:bg-[var(--primary-hover)] sm:flex">
           <CalendarDays size={18} />
-
           Novo agendamento
         </button>
       </section>
@@ -118,10 +117,7 @@ export default function DashboardPage() {
                 </div>
 
                 {stat.positive && (
-                  <ArrowUpRight
-                    size={16}
-                    className="text-[var(--success)]"
-                  />
+                  <ArrowUpRight size={16} className="text-[var(--success)]" />
                 )}
               </div>
 
@@ -155,9 +151,7 @@ export default function DashboardPage() {
         <article className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-6">
           <div className="mb-8 flex items-start justify-between">
             <div>
-              <h2 className="font-medium">
-                Faturamento
-              </h2>
+              <h2 className="font-medium">Faturamento</h2>
 
               <p className="mt-1 text-xs text-[var(--muted)]">
                 Desempenho dos últimos 7 dias
@@ -182,21 +176,16 @@ export default function DashboardPage() {
             </div>
 
             <div className="absolute inset-x-1 bottom-0 flex h-full items-end justify-between gap-2 pt-8 sm:gap-4">
-              {[42, 57, 38, 70, 62, 86, 76].map(
-                (height, index) => (
+              {[42, 57, 38, 70, 62, 86, 76].map((height, index) => (
+                <div key={index} className="flex h-full flex-1 items-end">
                   <div
-                    key={index}
-                    className="flex h-full flex-1 items-end"
-                  >
-                    <div
-                      className="w-full rounded-t-lg bg-gradient-to-t from-[#9a6a1b] to-[#e0a943] opacity-90"
-                      style={{
-                        height: `${height}%`,
-                      }}
-                    />
-                  </div>
-                ),
-              )}
+                    className="w-full rounded-t-lg bg-gradient-to-t from-[#9a6a1b] to-[#e0a943] opacity-90"
+                    style={{
+                      height: `${height}%`,
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -216,13 +205,9 @@ export default function DashboardPage() {
         <article className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)]">
           <div className="flex items-center justify-between border-b border-[var(--border-soft)] p-4 sm:p-5">
             <div>
-              <h2 className="font-medium">
-                Próximos horários
-              </h2>
+              <h2 className="font-medium">Próximos horários</h2>
 
-              <p className="mt-1 text-xs text-[var(--muted)]">
-                Agenda de hoje
-              </p>
+              <p className="mt-1 text-xs text-[var(--muted)]">Agenda de hoje</p>
             </div>
 
             <button className="flex size-9 items-center justify-center rounded-xl text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-white">
@@ -252,8 +237,7 @@ export default function DashboardPage() {
                   </div>
 
                   <p className="mt-1 truncate text-xs text-[var(--muted)]">
-                    {appointment.service} •{" "}
-                    {appointment.barber}
+                    {appointment.service} • {appointment.barber}
                   </p>
 
                   <div className="mt-2 flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
@@ -278,30 +262,22 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <p className="text-sm font-medium">
-                Serviço mais vendido
-              </p>
+              <p className="text-sm font-medium">Serviço mais vendido</p>
 
-              <p className="text-xs text-[var(--muted)]">
-                Neste mês
-              </p>
+              <p className="text-xs text-[var(--muted)]">Neste mês</p>
             </div>
           </div>
 
           <div className="mt-6 flex items-end justify-between">
             <div>
-              <p className="text-lg font-semibold">
-                Corte + Barba
-              </p>
+              <p className="text-lg font-semibold">Corte + Barba</p>
 
               <p className="mt-1 text-xs text-[var(--muted)]">
                 48 atendimentos
               </p>
             </div>
 
-            <span className="text-sm text-[var(--primary)]">
-              R$ 2.880
-            </span>
+            <span className="text-sm text-[var(--primary)]">R$ 2.880</span>
           </div>
         </article>
 
@@ -312,30 +288,20 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <p className="text-sm font-medium">
-                Agenda de hoje
-              </p>
+              <p className="text-sm font-medium">Agenda de hoje</p>
 
-              <p className="text-xs text-[var(--muted)]">
-                Segunda-feira
-              </p>
+              <p className="text-xs text-[var(--muted)]">Segunda-feira</p>
             </div>
           </div>
 
           <div className="mt-6 flex items-end justify-between">
             <div>
-              <p className="text-lg font-semibold">
-                14 agendamentos
-              </p>
+              <p className="text-lg font-semibold">14 agendamentos</p>
 
-              <p className="mt-1 text-xs text-[var(--muted)]">
-                9 concluídos
-              </p>
+              <p className="mt-1 text-xs text-[var(--muted)]">9 concluídos</p>
             </div>
 
-            <span className="text-sm text-[var(--success)]">
-              64%
-            </span>
+            <span className="text-sm text-[var(--success)]">64%</span>
           </div>
         </article>
       </section>
@@ -344,7 +310,6 @@ export default function DashboardPage() {
 
       <button className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-semibold text-black sm:hidden">
         <CalendarDays size={18} />
-
         Novo agendamento
       </button>
     </div>

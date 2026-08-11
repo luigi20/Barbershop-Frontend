@@ -11,11 +11,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import {
-  FormEvent,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import {
   initialAppointments,
@@ -23,20 +19,14 @@ import {
   services,
 } from "@/data/mocks/agenda";
 
-import {
-  Appointment,
-  AppointmentStatus,
-} from "@/types/appointment";
+import { Appointment, AppointmentStatus } from "@/types/appointment";
 
 const START_HOUR = 8;
 const END_HOUR = 20;
 
 function dateToKey(date: Date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(
-    2,
-    "0",
-  );
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
@@ -83,9 +73,7 @@ function minutesToTime(total: number) {
   const hour = Math.floor(total / 60);
   const minute = total % 60;
 
-  return `${String(hour).padStart(2, "0")}:${String(
-    minute,
-  ).padStart(2, "0")}`;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function addMinutes(time: string, amount: number) {
@@ -95,11 +83,7 @@ function addMinutes(time: string, amount: number) {
 function createTimeSlots() {
   const slots: string[] = [];
 
-  for (
-    let minutes = START_HOUR * 60;
-    minutes < END_HOUR * 60;
-    minutes += 15
-  ) {
+  for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += 15) {
     slots.push(minutesToTime(minutes));
   }
 
@@ -117,32 +101,27 @@ const statusConfig: Record<
 > = {
   scheduled: {
     label: "Agendado",
-    className:
-      "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    className: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   },
 
   confirmed: {
     label: "Confirmado",
-    className:
-      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   },
 
   completed: {
     label: "Concluído",
-    className:
-      "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
+    className: "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
   },
 
   cancelled: {
     label: "Cancelado",
-    className:
-      "bg-red-500/10 text-red-400 border-red-500/20",
+    className: "bg-red-500/10 text-red-400 border-red-500/20",
   },
 
   no_show: {
     label: "Faltou",
-    className:
-      "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    className: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   },
 };
 
@@ -155,48 +134,32 @@ interface NewAppointmentForm {
 }
 
 export function AgendaView() {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date(),
-  );
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [appointments, setAppointments] =
     useState<Appointment[]>(initialAppointments);
 
-  const [
-    selectedProfessional,
-    setSelectedProfessional,
-  ] = useState("all");
+  const [selectedProfessional, setSelectedProfessional] = useState("all");
 
-  const [
-    selectedAppointment,
-    setSelectedAppointment,
-  ] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
 
-  const [newAppointmentOpen, setNewAppointmentOpen] =
-    useState(false);
+  const [newAppointmentOpen, setNewAppointmentOpen] = useState(false);
 
-  const [form, setForm] =
-    useState<NewAppointmentForm>({
-      customerName: "",
-      serviceId: services[0]?.id ?? "",
-      professionalId: professionals[0]?.id ?? "",
-      date: keyToInputDate(new Date()),
-      time: "09:00",
-    });
+  const [form, setForm] = useState<NewAppointmentForm>({
+    customerName: "",
+    serviceId: services[0]?.id ?? "",
+    professionalId: professionals[0]?.id ?? "",
+    date: keyToInputDate(new Date()),
+    time: "09:00",
+  });
 
   const selectedDateKey = dateToKey(selectedDate);
 
   const dayAppointments = useMemo(() => {
     return appointments
-      .filter(
-        (appointment) =>
-          appointment.date === selectedDateKey,
-      )
-      .sort(
-        (a, b) =>
-          timeToMinutes(a.startTime) -
-          timeToMinutes(b.startTime),
-      );
+      .filter((appointment) => appointment.date === selectedDateKey)
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }, [appointments, selectedDateKey]);
 
   const mobileAppointments = useMemo(() => {
@@ -205,22 +168,16 @@ export function AgendaView() {
     }
 
     return dayAppointments.filter(
-      (appointment) =>
-        appointment.professionalId ===
-        selectedProfessional,
+      (appointment) => appointment.professionalId === selectedProfessional,
     );
   }, [dayAppointments, selectedProfessional]);
 
   function previousDay() {
-    setSelectedDate((current) =>
-      addDays(current, -1),
-    );
+    setSelectedDate((current) => addDays(current, -1));
   }
 
   function nextDay() {
-    setSelectedDate((current) =>
-      addDays(current, 1),
-    );
+    setSelectedDate((current) => addDays(current, 1));
   }
 
   function goToday() {
@@ -236,24 +193,16 @@ export function AgendaView() {
     setNewAppointmentOpen(true);
   }
 
-  function handleCreateAppointment(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function handleCreateAppointment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const professional = professionals.find(
       (item) => item.id === form.professionalId,
     );
 
-    const service = services.find(
-      (item) => item.id === form.serviceId,
-    );
+    const service = services.find((item) => item.id === form.serviceId);
 
-    if (
-      !professional ||
-      !service ||
-      !form.customerName.trim()
-    ) {
+    if (!professional || !service || !form.customerName.trim()) {
       return;
     }
 
@@ -263,10 +212,7 @@ export function AgendaView() {
       date: form.date,
 
       startTime: form.time,
-      endTime: addMinutes(
-        form.time,
-        service.durationMinutes,
-      ),
+      endTime: addMinutes(form.time, service.durationMinutes),
 
       customerName: form.customerName.trim(),
 
@@ -281,16 +227,11 @@ export function AgendaView() {
       status: "scheduled",
     };
 
-    setAppointments((current) => [
-      ...current,
-      appointment,
-    ]);
+    setAppointments((current) => [...current, appointment]);
 
     setNewAppointmentOpen(false);
 
-    setSelectedDate(
-      new Date(`${form.date}T12:00:00`),
-    );
+    setSelectedDate(new Date(`${form.date}T12:00:00`));
 
     setForm({
       customerName: "",
@@ -318,8 +259,7 @@ export function AgendaView() {
               </h1>
 
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Gerencie os horários e atendimentos
-                da equipe.
+                Gerencie os horários e atendimentos da equipe.
               </p>
             </div>
 
@@ -336,7 +276,6 @@ export function AgendaView() {
                 className="flex h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-black transition hover:bg-[var(--primary-hover)]"
               >
                 <Plus size={18} />
-
                 Novo agendamento
               </button>
             </div>
@@ -388,9 +327,7 @@ export function AgendaView() {
           <div className="-mx-4 mb-4 overflow-x-auto px-4 scrollbar-none sm:-mx-6 sm:px-6">
             <div className="flex w-max gap-2">
               <button
-                onClick={() =>
-                  setSelectedProfessional("all")
-                }
+                onClick={() => setSelectedProfessional("all")}
                 className={`h-10 rounded-full border px-4 text-xs font-medium transition ${
                   selectedProfessional === "all"
                     ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
@@ -401,18 +338,12 @@ export function AgendaView() {
               </button>
 
               {professionals.map((professional) => {
-                const active =
-                  selectedProfessional ===
-                  professional.id;
+                const active = selectedProfessional === professional.id;
 
                 return (
                   <button
                     key={professional.id}
-                    onClick={() =>
-                      setSelectedProfessional(
-                        professional.id,
-                      )
-                    }
+                    onClick={() => setSelectedProfessional(professional.id)}
                     className={`h-10 rounded-full border px-4 text-xs font-medium transition ${
                       active
                         ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
@@ -436,13 +367,10 @@ export function AgendaView() {
                   className="mx-auto text-[var(--muted-foreground)]"
                 />
 
-                <p className="mt-4 text-sm font-medium">
-                  Nenhum agendamento
-                </p>
+                <p className="mt-4 text-sm font-medium">Nenhum agendamento</p>
 
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                  Não existem horários agendados para
-                  este dia.
+                  Não existem horários agendados para este dia.
                 </p>
 
                 <button
@@ -454,73 +382,59 @@ export function AgendaView() {
               </div>
             )}
 
-            {mobileAppointments.map(
-              (appointment) => {
-                const status =
-                  statusConfig[appointment.status];
+            {mobileAppointments.map((appointment) => {
+              const status = statusConfig[appointment.status];
 
-                return (
-                  <button
-                    key={appointment.id}
-                    onClick={() =>
-                      setSelectedAppointment(
-                        appointment,
-                      )
-                    }
-                    className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-left transition active:scale-[0.99]"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex min-w-[52px] flex-col items-center rounded-xl bg-[var(--primary-soft)] px-2 py-2 text-[var(--primary)]">
-                        <Clock3 size={16} />
+              return (
+                <button
+                  key={appointment.id}
+                  onClick={() => setSelectedAppointment(appointment)}
+                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-left transition active:scale-[0.99]"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex min-w-[52px] flex-col items-center rounded-xl bg-[var(--primary-soft)] px-2 py-2 text-[var(--primary)]">
+                      <Clock3 size={16} />
 
-                        <span className="mt-1 text-xs font-semibold">
-                          {appointment.startTime}
+                      <span className="mt-1 text-xs font-semibold">
+                        {appointment.startTime}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">
+                            {appointment.customerName}
+                          </p>
+
+                          <p className="mt-1 truncate text-xs text-[var(--muted)]">
+                            {appointment.serviceName}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-medium ${status.className}`}
+                        >
+                          {status.label}
                         </span>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold">
-                              {
-                                appointment.customerName
-                              }
-                            </p>
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
+                          <UserRound size={12} />
 
-                            <p className="mt-1 truncate text-xs text-[var(--muted)]">
-                              {appointment.serviceName}
-                            </p>
-                          </div>
-
-                          <span
-                            className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-medium ${status.className}`}
-                          >
-                            {status.label}
-                          </span>
+                          {appointment.professionalName.split(" ")[0]}
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
-                            <UserRound size={12} />
-
-                            {
-                              appointment.professionalName.split(
-                                " ",
-                              )[0]
-                            }
-                          </div>
-
-                          <span className="text-[11px] text-[var(--muted)]">
-                            {appointment.startTime} -{" "}
-                            {appointment.endTime}
-                          </span>
-                        </div>
+                        <span className="text-[11px] text-[var(--muted)]">
+                          {appointment.startTime} - {appointment.endTime}
+                        </span>
                       </div>
                     </div>
-                  </button>
-                );
-              },
-            )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -550,42 +464,37 @@ export function AgendaView() {
 
                 {/* CABEÇALHO PROFISSIONAIS */}
 
-                {professionals.map(
-                  (professional, index) => (
-                    <div
-                      key={professional.id}
-                      className="z-20 flex items-center gap-3 border-b border-r border-[var(--border-soft)] bg-[#101010] px-4 last:border-r-0"
-                      style={{
-                        gridColumn: index + 2,
-                        gridRow: 1,
-                      }}
-                    >
-                      <div className="flex size-9 items-center justify-center rounded-full bg-[var(--primary-soft)] text-xs font-semibold text-[var(--primary)]">
-                        {professional.name
-                          .split(" ")
-                          .slice(0, 2)
-                          .map((name) => name[0])
-                          .join("")}
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium">
-                          {professional.name}
-                        </p>
-
-                        <p className="mt-0.5 text-[10px] text-[var(--muted)]">
-                          {professional.role}
-                        </p>
-                      </div>
+                {professionals.map((professional, index) => (
+                  <div
+                    key={professional.id}
+                    className="z-20 flex items-center gap-3 border-b border-r border-[var(--border-soft)] bg-[#101010] px-4 last:border-r-0"
+                    style={{
+                      gridColumn: index + 2,
+                      gridRow: 1,
+                    }}
+                  >
+                    <div className="flex size-9 items-center justify-center rounded-full bg-[var(--primary-soft)] text-xs font-semibold text-[var(--primary)]">
+                      {professional.name
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((name) => name[0])
+                        .join("")}
                     </div>
-                  ),
-                )}
+
+                    <div>
+                      <p className="text-sm font-medium">{professional.name}</p>
+
+                      <p className="mt-0.5 text-[10px] text-[var(--muted)]">
+                        {professional.role}
+                      </p>
+                    </div>
+                  </div>
+                ))}
 
                 {/* HORÁRIOS */}
 
                 {timeSlots.map((time, index) => {
-                  const minute =
-                    timeToMinutes(time) % 60;
+                  const minute = timeToMinutes(time) % 60;
 
                   const showLabel = minute === 0;
 
@@ -605,9 +514,7 @@ export function AgendaView() {
                       }}
                     >
                       {showLabel && (
-                        <span className="relative -top-2">
-                          {time}
-                        </span>
+                        <span className="relative -top-2">{time}</span>
                       )}
                     </div>
                   );
@@ -615,130 +522,94 @@ export function AgendaView() {
 
                 {/* GRID BACKGROUND */}
 
-                {professionals.flatMap(
-                  (professional, professionalIndex) =>
-                    timeSlots.map(
-                      (time, slotIndex) => {
-                        const minute =
-                          timeToMinutes(time) % 60;
+                {professionals.flatMap((professional, professionalIndex) =>
+                  timeSlots.map((time, slotIndex) => {
+                    const minute = timeToMinutes(time) % 60;
 
-                        return (
-                          <div
-                            key={`${professional.id}-${time}`}
-                            className={`border-r border-[var(--border-soft)] last:border-r-0 ${
-                              minute === 0
-                                ? "border-t border-[#292929]"
-                                : minute === 30
-                                  ? "border-t border-[#1d1d1d]"
-                                  : ""
-                            }`}
-                            style={{
-                              gridColumn:
-                                professionalIndex + 2,
-                              gridRow:
-                                slotIndex + 2,
-                            }}
-                          />
-                        );
-                      },
-                    ),
+                    return (
+                      <div
+                        key={`${professional.id}-${time}`}
+                        className={`border-r border-[var(--border-soft)] last:border-r-0 ${
+                          minute === 0
+                            ? "border-t border-[#292929]"
+                            : minute === 30
+                              ? "border-t border-[#1d1d1d]"
+                              : ""
+                        }`}
+                        style={{
+                          gridColumn: professionalIndex + 2,
+                          gridRow: slotIndex + 2,
+                        }}
+                      />
+                    );
+                  }),
                 )}
 
                 {/* AGENDAMENTOS */}
 
-                {dayAppointments.map(
-                  (appointment) => {
-                    const professionalIndex =
-                      professionals.findIndex(
-                        (professional) =>
-                          professional.id ===
-                          appointment.professionalId,
-                      );
+                {dayAppointments.map((appointment) => {
+                  const professionalIndex = professionals.findIndex(
+                    (professional) =>
+                      professional.id === appointment.professionalId,
+                  );
 
-                    if (professionalIndex < 0) {
-                      return null;
-                    }
+                  if (professionalIndex < 0) {
+                    return null;
+                  }
 
-                    const startIndex =
-                      timeSlots.indexOf(
-                        appointment.startTime,
-                      );
+                  const startIndex = timeSlots.indexOf(appointment.startTime);
 
-                    if (startIndex < 0) {
-                      return null;
-                    }
+                  if (startIndex < 0) {
+                    return null;
+                  }
 
-                    const duration =
-                      timeToMinutes(
-                        appointment.endTime,
-                      ) -
-                      timeToMinutes(
-                        appointment.startTime,
-                      );
+                  const duration =
+                    timeToMinutes(appointment.endTime) -
+                    timeToMinutes(appointment.startTime);
 
-                    const rowSpan = Math.max(
-                      1,
-                      Math.ceil(duration / 15),
-                    );
+                  const rowSpan = Math.max(1, Math.ceil(duration / 15));
 
-                    const status =
-                      statusConfig[
-                        appointment.status
-                      ];
+                  const status = statusConfig[appointment.status];
 
-                    return (
-                      <button
-                        key={appointment.id}
-                        onClick={() =>
-                          setSelectedAppointment(
-                            appointment,
-                          )
-                        }
-                        className="z-10 m-1 overflow-hidden rounded-lg border border-[var(--primary)]/20 bg-[#211a0f] p-2 text-left transition hover:border-[var(--primary)]/50 hover:bg-[#271f12]"
-                        style={{
-                          gridColumn:
-                            professionalIndex + 2,
+                  return (
+                    <button
+                      key={appointment.id}
+                      onClick={() => setSelectedAppointment(appointment)}
+                      className="z-10 m-1 overflow-hidden rounded-lg border border-[var(--primary)]/20 bg-[#211a0f] p-2 text-left transition hover:border-[var(--primary)]/50 hover:bg-[#271f12]"
+                      style={{
+                        gridColumn: professionalIndex + 2,
 
-                          gridRow: `${
-                            startIndex + 2
-                          } / span ${rowSpan}`,
-                        }}
-                      >
-                        <div className="flex h-full flex-col">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="truncate text-xs font-semibold text-white">
-                              {
-                                appointment.customerName
-                              }
-                            </p>
+                        gridRow: `${startIndex + 2} / span ${rowSpan}`,
+                      }}
+                    >
+                      <div className="flex h-full flex-col">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-xs font-semibold text-white">
+                            {appointment.customerName}
+                          </p>
 
-                            <span className="text-[9px] text-[var(--primary)]">
-                              {
-                                appointment.startTime
-                              }
-                            </span>
-                          </div>
-
-                          {rowSpan >= 2 && (
-                            <p className="mt-1 truncate text-[10px] text-[#c7a66a]">
-                              {
-                                appointment.serviceName
-                              }
-                            </p>
-                          )}
-
-                          {rowSpan >= 3 && (
-                            <span
-                              className={`mt-auto w-fit rounded-full border px-1.5 py-0.5 text-[8px] ${status.className}`}
-                            >
-                              {status.label}
-                            </span>
-                          )}
+                          <span className="text-[9px] text-[var(--primary)]">
+                            {appointment.startTime}
+                          </span>
                         </div>
-                      </button>
-                    );
-                  },
-                )}
+
+                        {rowSpan >= 2 && (
+                          <p className="mt-1 truncate text-[10px] text-[#c7a66a]">
+                            {appointment.serviceName}
+                          </p>
+                        )}
+
+                        {rowSpan >= 3 && (
+                          <span
+                            className={`mt-auto w-fit rounded-full border px-1.5 py-0.5 text-[8px] ${status.className}`}
+                          >
+                            {status.label}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -764,9 +635,7 @@ export function AgendaView() {
       {selectedAppointment && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6">
           <button
-            onClick={() =>
-              setSelectedAppointment(null)
-            }
+            onClick={() => setSelectedAppointment(null)}
             className="absolute inset-0"
             aria-label="Fechar detalhes"
           />
@@ -781,16 +650,12 @@ export function AgendaView() {
                 </p>
 
                 <h2 className="mt-1 text-xl font-semibold">
-                  {
-                    selectedAppointment.customerName
-                  }
+                  {selectedAppointment.customerName}
                 </h2>
               </div>
 
               <button
-                onClick={() =>
-                  setSelectedAppointment(null)
-                }
+                onClick={() => setSelectedAppointment(null)}
                 className="flex size-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--muted)]"
               >
                 <X size={18} />
@@ -801,17 +666,13 @@ export function AgendaView() {
               <DetailRow
                 icon={<Scissors size={17} />}
                 label="Serviço"
-                value={
-                  selectedAppointment.serviceName
-                }
+                value={selectedAppointment.serviceName}
               />
 
               <DetailRow
                 icon={<UserRound size={17} />}
                 label="Profissional"
-                value={
-                  selectedAppointment.professionalName
-                }
+                value={selectedAppointment.professionalName}
               />
 
               <DetailRow
@@ -823,41 +684,27 @@ export function AgendaView() {
               <DetailRow
                 icon={<CalendarDays size={17} />}
                 label="Data"
-                value={new Intl.DateTimeFormat(
-                  "pt-BR",
-                ).format(
-                  new Date(
-                    `${selectedAppointment.date}T12:00:00`,
-                  ),
+                value={new Intl.DateTimeFormat("pt-BR").format(
+                  new Date(`${selectedAppointment.date}T12:00:00`),
                 )}
               />
             </div>
 
             <div className="mt-5 flex items-center justify-between rounded-xl border border-[var(--border-soft)] bg-[#0c0c0c] p-4">
-              <span className="text-sm text-[var(--muted)]">
-                Valor
-              </span>
+              <span className="text-sm text-[var(--muted)]">Valor</span>
 
               <span className="font-semibold text-[var(--primary)]">
-                {formatCurrency(
-                  selectedAppointment.price,
-                )}
+                {formatCurrency(selectedAppointment.price)}
               </span>
             </div>
 
             <div className="mt-4">
               <span
                 className={`inline-flex rounded-full border px-3 py-1.5 text-xs ${
-                  statusConfig[
-                    selectedAppointment.status
-                  ].className
+                  statusConfig[selectedAppointment.status].className
                 }`}
               >
-                {
-                  statusConfig[
-                    selectedAppointment.status
-                  ].label
-                }
+                {statusConfig[selectedAppointment.status].label}
               </span>
             </div>
           </div>
@@ -872,9 +719,7 @@ export function AgendaView() {
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-6">
           <button
             className="absolute inset-0"
-            onClick={() =>
-              setNewAppointmentOpen(false)
-            }
+            onClick={() => setNewAppointmentOpen(false)}
             aria-label="Fechar novo agendamento"
           />
 
@@ -890,16 +735,12 @@ export function AgendaView() {
                   Agenda
                 </p>
 
-                <h2 className="mt-1 text-xl font-semibold">
-                  Novo agendamento
-                </h2>
+                <h2 className="mt-1 text-xl font-semibold">Novo agendamento</h2>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setNewAppointmentOpen(false)
-                }
+                onClick={() => setNewAppointmentOpen(false)}
                 className="flex size-10 items-center justify-center rounded-xl bg-[var(--surface-secondary)] text-[var(--muted)]"
               >
                 <X size={18} />
@@ -919,8 +760,7 @@ export function AgendaView() {
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,
-                      customerName:
-                        event.target.value,
+                      customerName: event.target.value,
                     }))
                   }
                   placeholder="Nome do cliente"
@@ -940,19 +780,14 @@ export function AgendaView() {
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,
-                      serviceId:
-                        event.target.value,
+                      serviceId: event.target.value,
                     }))
                   }
                   className="h-12 w-full rounded-xl border border-[var(--border)] bg-[#0b0b0b] px-4 text-sm outline-none focus:border-[var(--primary)]"
                 >
                   {services.map((service) => (
-                    <option
-                      value={service.id}
-                      key={service.id}
-                    >
-                      {service.name} •{" "}
-                      {service.durationMinutes} min •{" "}
+                    <option value={service.id} key={service.id}>
+                      {service.name} • {service.durationMinutes} min •{" "}
                       {formatCurrency(service.price)}
                     </option>
                   ))}
@@ -971,22 +806,16 @@ export function AgendaView() {
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,
-                      professionalId:
-                        event.target.value,
+                      professionalId: event.target.value,
                     }))
                   }
                   className="h-12 w-full rounded-xl border border-[var(--border)] bg-[#0b0b0b] px-4 text-sm outline-none focus:border-[var(--primary)]"
                 >
-                  {professionals.map(
-                    (professional) => (
-                      <option
-                        value={professional.id}
-                        key={professional.id}
-                      >
-                        {professional.name}
-                      </option>
-                    ),
-                  )}
+                  {professionals.map((professional) => (
+                    <option value={professional.id} key={professional.id}>
+                      {professional.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -1034,9 +863,7 @@ export function AgendaView() {
             <div className="mt-7 flex gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setNewAppointmentOpen(false)
-                }
+                onClick={() => setNewAppointmentOpen(false)}
                 className="h-12 flex-1 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--muted)]"
               >
                 Cancelar
@@ -1047,7 +874,6 @@ export function AgendaView() {
                 className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-semibold text-black"
               >
                 <Check size={18} />
-
                 Criar agendamento
               </button>
             </div>
@@ -1078,9 +904,7 @@ function DetailRow({
           {label}
         </p>
 
-        <p className="mt-0.5 truncate text-sm font-medium">
-          {value}
-        </p>
+        <p className="mt-0.5 truncate text-sm font-medium">{value}</p>
       </div>
     </div>
   );

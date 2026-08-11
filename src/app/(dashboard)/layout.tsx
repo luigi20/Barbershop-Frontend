@@ -5,12 +5,6 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({
-  children,
-}: DashboardLayoutProps) {
-  return (
-    <DashboardShell>
-      {children}
-    </DashboardShell>
-  );
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  return <DashboardShell>{children}</DashboardShell>;
 }
