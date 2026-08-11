@@ -6,30 +6,50 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:prettier:check": "prettier --check .",
+    "lint:eslint:check": "next lint",
+    "lint:prettier:fix": "prettier --write .",
+    "prepare": "husky",
+    "commit": "cz"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.21",
-    "framer-motion": "^13.0.0",
     "lucide-react": "^1.30.0",
+    "motion": "^13.1.0",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.85.0",
+    "secretlint": "13.0.4",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "19.3.0",
+    "@commitlint/config-conventional": "19.2.2",
+    "@secretlint/secretlint-rule-preset-recommend": "13.0.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "commitizen": "4.3.2",
+    "cz-conventional-changelog": "3.3.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "husky": "^9.1.7",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*": "secretlint"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
