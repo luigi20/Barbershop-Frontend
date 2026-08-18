@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openai-codex": {
+      "command": "codex",
+      "args": ["mcp-server"]
+    }
+  }
+}
