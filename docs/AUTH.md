@@ -20,14 +20,14 @@ Este documento registra o que existe, o que foi planejado como estrutura, e o qu
 
 Os Route Groups e páginas foram criados como placeholders, mas estão todos vazios:
 
-| Arquivo | Bytes | Status |
-|---|---|---|
-| app/(auth)/login/page.tsx | 0 | PLANEJADO — vazio |
-| app/(auth)/cadastro/page.tsx | 0 | PLANEJADO — vazio |
-| app/(auth)/mfa/ | — | PLANEJADO — sem page.tsx |
-| app/(auth)/select-entity/ | — | PLANEJADO — sem page.tsx |
-| components/auth/ | — | PLANEJADO — pasta vazia |
-| types/auth.ts | 0 | PLANEJADO — vazio |
+| Arquivo                      | Bytes | Status                   |
+| ---------------------------- | ----- | ------------------------ |
+| app/(auth)/login/page.tsx    | 0     | PLANEJADO — vazio        |
+| app/(auth)/cadastro/page.tsx | 0     | PLANEJADO — vazio        |
+| app/(auth)/mfa/              | —     | PLANEJADO — sem page.tsx |
+| app/(auth)/select-entity/    | —     | PLANEJADO — sem page.tsx |
+| components/auth/             | —     | PLANEJADO — pasta vazia  |
+| types/auth.ts                | 0     | PLANEJADO — vazio        |
 
 ### Rota Raiz — CONFIRMADO
 
@@ -49,16 +49,16 @@ Sem middleware, não há como proteger rotas no nível do servidor.
 
 **CONFIRMADO como ausente:**
 
-| Item | Status |
-|---|---|
-| NextAuth / Auth.js | Não instalado |
-| JWT handling | Não implementado |
-| Cookies de sessão | Não implementados |
-| Context de autenticação | Não existe |
-| Guards de rota | Não existem |
-| middleware.ts | Não existe |
-| Refresh de token | Não implementado |
-| Logout | Não implementado |
+| Item                    | Status            |
+| ----------------------- | ----------------- |
+| NextAuth / Auth.js      | Não instalado     |
+| JWT handling            | Não implementado  |
+| Cookies de sessão       | Não implementados |
+| Context de autenticação | Não existe        |
+| Guards de rota          | Não existem       |
+| middleware.ts           | Não existe        |
+| Refresh de token        | Não implementado  |
+| Logout                  | Não implementado  |
 
 ---
 
@@ -77,15 +77,15 @@ Nenhum contrato, fluxo ou implementação foi encontrado no código.
 
 ## Estratégia de Auth — A CONFIRMAR
 
-| Item | Status |
-|---|---|
+| Item                                           | Status      |
+| ---------------------------------------------- | ----------- |
 | Biblioteca de auth (NextAuth, Auth.js, custom) | A CONFIRMAR |
-| Tipo de token (JWT, session, opaque) | A CONFIRMAR |
-| Armazenamento (cookie httpOnly, localStorage) | A CONFIRMAR |
-| Estratégia MFA | A CONFIRMAR |
-| Multi-tenant (select-entity) | A CONFIRMAR |
-| Roles e permissões | A CONFIRMAR |
-| Integração com o backend NestJS | A CONFIRMAR |
+| Tipo de token (JWT, session, opaque)           | A CONFIRMAR |
+| Armazenamento (cookie httpOnly, localStorage)  | A CONFIRMAR |
+| Estratégia MFA                                 | A CONFIRMAR |
+| Multi-tenant (select-entity)                   | A CONFIRMAR |
+| Roles e permissões                             | A CONFIRMAR |
+| Integração com o backend NestJS                | A CONFIRMAR |
 
 ---
 

@@ -97,4 +97,3 @@ Quando uma alteração significativa for realizada:
 Não atualizar documentação por mudanças triviais.
 
 <!-- END:nextjs-agent-rules -->
-

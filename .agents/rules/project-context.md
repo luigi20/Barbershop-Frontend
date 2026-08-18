@@ -20,6 +20,7 @@ Não trate comportamento PLANEJADO ou A CONFIRMAR como implementação existente
 Preserve os padrões atuais da codebase.
 
 Não invente:
+
 - endpoints
 - DTOs
 - contratos de API

@@ -44,6 +44,7 @@ Não criar uma arquitetura de autenticação baseada em suposição.
 ## Segurança
 
 Não:
+
 - registrar tokens em logs;
 - expor secrets;
 - armazenar secrets no frontend;

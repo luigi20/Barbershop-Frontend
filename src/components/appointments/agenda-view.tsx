@@ -25,10 +25,7 @@ import {
   professionals,
   services,
 } from "@/data/mocks/agenda";
-import type {
-  Appointment,
-  AppointmentStatus,
-} from "@/types/appointment";
+import type { Appointment, AppointmentStatus } from "@/types/appointment";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -157,11 +154,7 @@ function addMinutes(time: string, amount: number) {
 function createTimeSlots() {
   const slots: string[] = [];
 
-  for (
-    let minutes = START_HOUR * 60;
-    minutes < END_HOUR * 60;
-    minutes += 15
-  ) {
+  for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += 15) {
     slots.push(minutesToTime(minutes));
   }
 
@@ -183,8 +176,7 @@ const statusConfig: Record<
   },
   confirmed: {
     label: "Confirmado",
-    className:
-      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   },
   completed: {
     label: "Concluído",
@@ -235,10 +227,7 @@ export function AgendaView() {
   const dayAppointments = useMemo(() => {
     return appointments
       .filter((appointment) => appointment.date === selectedDateKey)
-      .sort(
-        (a, b) =>
-          timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
-      );
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
   }, [appointments, selectedDateKey]);
 
   const mobileAppointments = useMemo(() => {
@@ -247,8 +236,7 @@ export function AgendaView() {
     }
 
     return dayAppointments.filter(
-      (appointment) =>
-        appointment.professionalId === selectedProfessional,
+      (appointment) => appointment.professionalId === selectedProfessional,
     );
   }, [dayAppointments, selectedProfessional]);
 
@@ -320,11 +308,7 @@ export function AgendaView() {
   return (
     <MotionConfig reducedMotion="user">
       <>
-        <motion.div
-          variants={pageAnimation}
-          initial="hidden"
-          animate="visible"
-        >
+        <motion.div variants={pageAnimation} initial="hidden" animate="visible">
           {/* CABEÇALHO */}
           <section className="mb-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -444,12 +428,8 @@ export function AgendaView() {
                   {professionals.map((professional) => (
                     <ProfessionalFilterButton
                       key={professional.id}
-                      active={
-                        selectedProfessional === professional.id
-                      }
-                      onClick={() =>
-                        setSelectedProfessional(professional.id)
-                      }
+                      active={selectedProfessional === professional.id}
+                      onClick={() => setSelectedProfessional(professional.id)}
                     >
                       {professional.name.split(" ")[0]}
                     </ProfessionalFilterButton>
@@ -510,9 +490,7 @@ export function AgendaView() {
                       variants={cardAnimation}
                       key={appointment.id}
                       type="button"
-                      onClick={() =>
-                        setSelectedAppointment(appointment)
-                      }
+                      onClick={() => setSelectedAppointment(appointment)}
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.985 }}
                       className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-left transition-colors hover:border-[var(--primary)]/20 hover:bg-[var(--surface-hover)]"
@@ -642,37 +620,34 @@ export function AgendaView() {
                         }}
                       >
                         {showLabel && (
-                          <span className="relative -top-2">
-                            {time}
-                          </span>
+                          <span className="relative -top-2">{time}</span>
                         )}
                       </div>
                     );
                   })}
 
                   {/* GRID BACKGROUND */}
-                  {professionals.flatMap(
-                    (professional, professionalIndex) =>
-                      timeSlots.map((time, slotIndex) => {
-                        const minute = timeToMinutes(time) % 60;
+                  {professionals.flatMap((professional, professionalIndex) =>
+                    timeSlots.map((time, slotIndex) => {
+                      const minute = timeToMinutes(time) % 60;
 
-                        return (
-                          <div
-                            key={`${professional.id}-${time}`}
-                            className={`border-r border-[var(--border-soft)] last:border-r-0 ${
-                              minute === 0
-                                ? "border-t border-[#292929]"
-                                : minute === 30
-                                  ? "border-t border-[#1d1d1d]"
-                                  : ""
-                            }`}
-                            style={{
-                              gridColumn: professionalIndex + 2,
-                              gridRow: slotIndex + 2,
-                            }}
-                          />
-                        );
-                      }),
+                      return (
+                        <div
+                          key={`${professional.id}-${time}`}
+                          className={`border-r border-[var(--border-soft)] last:border-r-0 ${
+                            minute === 0
+                              ? "border-t border-[#292929]"
+                              : minute === 30
+                                ? "border-t border-[#1d1d1d]"
+                                : ""
+                          }`}
+                          style={{
+                            gridColumn: professionalIndex + 2,
+                            gridRow: slotIndex + 2,
+                          }}
+                        />
+                      );
+                    }),
                   )}
 
                   {/* AGENDAMENTOS */}
@@ -680,8 +655,7 @@ export function AgendaView() {
                     {dayAppointments.map((appointment) => {
                       const professionalIndex = professionals.findIndex(
                         (professional) =>
-                          professional.id ===
-                          appointment.professionalId,
+                          professional.id === appointment.professionalId,
                       );
 
                       if (professionalIndex < 0) {
@@ -700,10 +674,7 @@ export function AgendaView() {
                         timeToMinutes(appointment.endTime) -
                         timeToMinutes(appointment.startTime);
 
-                      const rowSpan = Math.max(
-                        1,
-                        Math.ceil(duration / 15),
-                      );
+                      const rowSpan = Math.max(1, Math.ceil(duration / 15));
 
                       const status = statusConfig[appointment.status];
 
@@ -712,9 +683,7 @@ export function AgendaView() {
                           layout
                           key={appointment.id}
                           type="button"
-                          onClick={() =>
-                            setSelectedAppointment(appointment)
-                          }
+                          onClick={() => setSelectedAppointment(appointment)}
                           initial={{
                             opacity: 0,
                             scale: 0.94,
@@ -907,9 +876,7 @@ export function AgendaView() {
                     icon={<CalendarDays size={17} />}
                     label="Data"
                     value={new Intl.DateTimeFormat("pt-BR").format(
-                      new Date(
-                        `${selectedAppointment.date}T12:00:00`,
-                      ),
+                      new Date(`${selectedAppointment.date}T12:00:00`),
                     )}
                   />
                 </motion.div>
@@ -920,9 +887,7 @@ export function AgendaView() {
                   transition={{ delay: 0.16, duration: 0.25 }}
                   className="mt-5 flex items-center justify-between rounded-xl border border-[var(--border-soft)] bg-[#0c0c0c] p-4"
                 >
-                  <span className="text-sm text-[var(--muted)]">
-                    Valor
-                  </span>
+                  <span className="text-sm text-[var(--muted)]">Valor</span>
 
                   <span className="font-semibold text-[var(--primary)]">
                     {formatCurrency(selectedAppointment.price)}
@@ -1080,10 +1045,7 @@ export function AgendaView() {
                       className="h-12 w-full rounded-xl border border-[var(--border)] bg-[#0b0b0b] px-4 text-sm outline-none focus:border-[var(--primary)]"
                     >
                       {professionals.map((professional) => (
-                        <option
-                          value={professional.id}
-                          key={professional.id}
-                        >
+                        <option value={professional.id} key={professional.id}>
                           {professional.name}
                         </option>
                       ))}
@@ -1190,9 +1152,7 @@ function AnimatedDetailRow({
           {label}
         </p>
 
-        <p className="mt-0.5 truncate text-sm font-medium">
-          {value}
-        </p>
+        <p className="mt-0.5 truncate text-sm font-medium">{value}</p>
       </div>
     </motion.div>
   );

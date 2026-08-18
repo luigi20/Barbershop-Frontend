@@ -27,20 +27,24 @@ Nenhum arquivo de cliente HTTP base foi encontrado no projeto.
 
 **CONFIRMADO:** Dados estáticos em `src/data/mocks/`.
 
-| Arquivo | Conteúdo | Status |
-|---|---|---|
-| mocks/agenda.ts | professionals[], services[], initialAppointments[] | CONFIRMADO — em uso |
-| mocks/services.ts | initialServices[] (5 serviços) | CONFIRMADO — em uso |
-| mocks/dashboard.ts | dashboardStats, nextAppointments[] | CONFIRMADO — criado, não usado pelos componentes |
-| mocks/appoiments.ts | — | CONFIRMADO — vazio (0 bytes, typo no nome) |
-| mocks/customers.ts | — | CONFIRMADO — vazio (0 bytes) |
-| mocks/professionals.ts | — | CONFIRMADO — vazio (0 bytes) |
+| Arquivo                | Conteúdo                                           | Status                                           |
+| ---------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| mocks/agenda.ts        | professionals[], services[], initialAppointments[] | CONFIRMADO — em uso                              |
+| mocks/services.ts      | initialServices[] (5 serviços)                     | CONFIRMADO — em uso                              |
+| mocks/dashboard.ts     | dashboardStats, nextAppointments[]                 | CONFIRMADO — criado, não usado pelos componentes |
+| mocks/appoiments.ts    | —                                                  | CONFIRMADO — vazio (0 bytes, typo no nome)       |
+| mocks/customers.ts     | —                                                  | CONFIRMADO — vazio (0 bytes)                     |
+| mocks/professionals.ts | —                                                  | CONFIRMADO — vazio (0 bytes)                     |
 
 ### Como os dados chegam aos componentes
 
 ```ts
 // Importação direta — CONFIRMADO
-import { initialAppointments, professionals, services } from "@/data/mocks/agenda";
+import {
+  initialAppointments,
+  professionals,
+  services,
+} from "@/data/mocks/agenda";
 import { initialServices } from "@/data/mocks/services";
 ```
 
@@ -52,12 +56,12 @@ O `DashboardPage` (`app/(dashboard)/dashboard/page.tsx`) declara seus dados como
 
 **CONFIRMADO: Não existe.**
 
-| Pasta | Status |
-|---|---|
-| src/services/ | CONFIRMADO: não existe |
-| HTTP interceptors | CONFIRMADO: não existe |
-| Tratamento de erros HTTP | CONFIRMADO: não existe |
-| Loading states de rede | CONFIRMADO: não existe |
+| Pasta                        | Status                  |
+| ---------------------------- | ----------------------- |
+| src/services/                | CONFIRMADO: não existe  |
+| HTTP interceptors            | CONFIRMADO: não existe  |
+| Tratamento de erros HTTP     | CONFIRMADO: não existe  |
+| Loading states de rede       | CONFIRMADO: não existe  |
 | Variáveis de ambiente (.env) | CONFIRMADO: não existem |
 
 ---
@@ -66,14 +70,14 @@ O `DashboardPage` (`app/(dashboard)/dashboard/page.tsx`) declara seus dados como
 
 **A CONFIRMAR:** O backend (NestJS + PostgreSQL) é um repositório separado e não foi analisado.
 
-| Item | Status |
-|---|---|
-| URL base da API | A CONFIRMAR |
-| Endpoints disponíveis | A CONFIRMAR |
-| Formato dos DTOs | A CONFIRMAR |
+| Item                               | Status      |
+| ---------------------------------- | ----------- |
+| URL base da API                    | A CONFIRMAR |
+| Endpoints disponíveis              | A CONFIRMAR |
+| Formato dos DTOs                   | A CONFIRMAR |
 | Autenticação HTTP (Bearer, Cookie) | A CONFIRMAR |
-| Versão da API (v1, v2) | A CONFIRMAR |
-| CORS configurado | A CONFIRMAR |
+| Versão da API (v1, v2)             | A CONFIRMAR |
+| CORS configurado                   | A CONFIRMAR |
 
 Não devem ser inventados endpoints ou formatos de request/response antes de confirmar com o backend.
 

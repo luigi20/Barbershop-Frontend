@@ -13,6 +13,7 @@ Antes de trabalhar com comunicação de dados, leia:
 ## Contratos
 
 Nunca invente:
+
 - endpoint
 - HTTP method
 - request body

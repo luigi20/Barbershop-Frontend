@@ -7,31 +7,16 @@ import {
   MotionConfig,
 } from "motion/react";
 
-import {
-  Check,
-  Clock3,
-  Pencil,
-  Plus,
-  Search,
-  Scissors,
-  X,
-} from "lucide-react";
+import { Check, Clock3, Pencil, Plus, Search, Scissors, X } from "lucide-react";
 
-import {
-  FormEvent,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { initialServices } from "@/data/mocks/services";
 import { Service } from "@/types/service";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
-type ServiceFilter =
-  | "all"
-  | "active"
-  | "inactive";
+type ServiceFilter = "all" | "active" | "inactive";
 
 interface ServiceForm {
   name: string;
@@ -55,36 +40,25 @@ function formatCurrency(value: number) {
 }
 
 export function ServicesView() {
-  const [services, setServices] =
-    useState<Service[]>(initialServices);
+  const [services, setServices] = useState<Service[]>(initialServices);
 
   const [search, setSearch] = useState("");
 
-  const [filter, setFilter] =
-    useState<ServiceFilter>("all");
+  const [filter, setFilter] = useState<ServiceFilter>("all");
 
-  const [modalOpen, setModalOpen] =
-    useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const [editingService, setEditingService] =
-    useState<Service | null>(null);
+  const [editingService, setEditingService] = useState<Service | null>(null);
 
-  const [form, setForm] =
-    useState<ServiceForm>(emptyForm);
+  const [form, setForm] = useState<ServiceForm>(emptyForm);
 
   const filteredServices = useMemo(() => {
-    const normalizedSearch = search
-      .trim()
-      .toLowerCase();
+    const normalizedSearch = search.trim().toLowerCase();
 
     return services.filter((service) => {
       const matchesSearch =
-        service.name
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        service.description
-          ?.toLowerCase()
-          .includes(normalizedSearch);
+        service.name.toLowerCase().includes(normalizedSearch) ||
+        service.description?.toLowerCase().includes(normalizedSearch);
 
       const matchesFilter =
         filter === "all" ||
@@ -96,24 +70,18 @@ export function ServicesView() {
   }, [services, search, filter]);
 
   const stats = useMemo(() => {
-    const active = services.filter(
-      (service) => service.active,
-    );
+    const active = services.filter((service) => service.active);
 
     const averagePrice =
       active.length > 0
-        ? active.reduce(
-            (total, service) =>
-              total + service.price,
-            0,
-          ) / active.length
+        ? active.reduce((total, service) => total + service.price, 0) /
+          active.length
         : 0;
 
     const averageDuration =
       active.length > 0
         ? active.reduce(
-            (total, service) =>
-              total + service.durationMinutes,
+            (total, service) => total + service.durationMinutes,
             0,
           ) / active.length
         : 0;
@@ -138,9 +106,7 @@ export function ServicesView() {
     setForm({
       name: service.name,
       description: service.description ?? "",
-      durationMinutes: String(
-        service.durationMinutes,
-      ),
+      durationMinutes: String(service.durationMinutes),
       price: String(service.price),
     });
 
@@ -156,20 +122,14 @@ export function ServicesView() {
     }, 200);
   }
 
-  function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const name = form.name.trim();
 
-    const durationMinutes = Number(
-      form.durationMinutes,
-    );
+    const durationMinutes = Number(form.durationMinutes);
 
-    const price = Number(
-      form.price.replace(",", "."),
-    );
+    const price = Number(form.price.replace(",", "."));
 
     if (
       !name ||
@@ -188,8 +148,7 @@ export function ServicesView() {
             ? {
                 ...service,
                 name,
-                description:
-                  form.description.trim(),
+                description: form.description.trim(),
                 durationMinutes,
                 price,
               }
@@ -200,17 +159,13 @@ export function ServicesView() {
       const newService: Service = {
         id: crypto.randomUUID(),
         name,
-        description:
-          form.description.trim(),
+        description: form.description.trim(),
         durationMinutes,
         price,
         active: true,
       };
 
-      setServices((current) => [
-        newService,
-        ...current,
-      ]);
+      setServices((current) => [newService, ...current]);
     }
 
     closeModal();
@@ -258,8 +213,7 @@ export function ServicesView() {
             </h1>
 
             <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
-              Gerencie os serviços, preços e
-              duração dos atendimentos.
+              Gerencie os serviços, preços e duração dos atendimentos.
             </p>
           </div>
 
@@ -274,7 +228,6 @@ export function ServicesView() {
             className="hidden h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-black sm:flex"
           >
             <Plus size={18} />
-
             Novo serviço
           </motion.button>
         </section>
@@ -296,17 +249,13 @@ export function ServicesView() {
 
           <StatCard
             title="Preço médio"
-            value={formatCurrency(
-              stats.averagePrice,
-            )}
+            value={formatCurrency(stats.averagePrice)}
             description="Serviços ativos"
           />
 
           <StatCard
             title="Duração média"
-            value={`${Math.round(
-              stats.averageDuration,
-            )} min`}
+            value={`${Math.round(stats.averageDuration)} min`}
             description="Por atendimento"
           />
         </section>
@@ -323,9 +272,7 @@ export function ServicesView() {
 
               <input
                 value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar serviço..."
                 className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#555] focus:border-[var(--primary)]"
               />
@@ -335,29 +282,21 @@ export function ServicesView() {
               <div className="flex w-full gap-2 overflow-x-auto lg:w-auto">
                 <FilterButton
                   active={filter === "all"}
-                  onClick={() =>
-                    setFilter("all")
-                  }
+                  onClick={() => setFilter("all")}
                 >
                   Todos
                 </FilterButton>
 
                 <FilterButton
                   active={filter === "active"}
-                  onClick={() =>
-                    setFilter("active")
-                  }
+                  onClick={() => setFilter("active")}
                 >
                   Ativos
                 </FilterButton>
 
                 <FilterButton
-                  active={
-                    filter === "inactive"
-                  }
-                  onClick={() =>
-                    setFilter("inactive")
-                  }
+                  active={filter === "inactive"}
+                  onClick={() => setFilter("inactive")}
                 >
                   Inativos
                 </FilterButton>
@@ -395,8 +334,7 @@ export function ServicesView() {
                 </h2>
 
                 <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--muted)]">
-                  Tente alterar os filtros ou
-                  cadastrar um novo serviço.
+                  Tente alterar os filtros ou cadastrar um novo serviço.
                 </p>
               </motion.div>
             ) : (
@@ -405,23 +343,15 @@ export function ServicesView() {
                 className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
               >
                 <AnimatePresence mode="popLayout">
-                  {filteredServices.map(
-                    (service, index) => (
-                      <ServiceCard
-                        key={service.id}
-                        service={service}
-                        index={index}
-                        onEdit={() =>
-                          openEditModal(service)
-                        }
-                        onToggle={() =>
-                          toggleService(
-                            service.id,
-                          )
-                        }
-                      />
-                    ),
-                  )}
+                  {filteredServices.map((service, index) => (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      index={index}
+                      onEdit={() => openEditModal(service)}
+                      onToggle={() => toggleService(service.id)}
+                    />
+                  ))}
                 </AnimatePresence>
               </motion.div>
             )}
@@ -514,9 +444,7 @@ export function ServicesView() {
                     </p>
 
                     <h2 className="mt-1 text-xl font-semibold">
-                      {editingService
-                        ? "Editar serviço"
-                        : "Novo serviço"}
+                      {editingService ? "Editar serviço" : "Novo serviço"}
                     </h2>
                   </div>
 
@@ -551,8 +479,7 @@ export function ServicesView() {
                       onChange={(event) =>
                         setForm((current) => ({
                           ...current,
-                          description:
-                            event.target.value,
+                          description: event.target.value,
                         }))
                       }
                       rows={4}
@@ -573,18 +500,12 @@ export function ServicesView() {
                           type="number"
                           min={5}
                           step={5}
-                          value={
-                            form.durationMinutes
-                          }
+                          value={form.durationMinutes}
                           onChange={(event) =>
-                            setForm(
-                              (current) => ({
-                                ...current,
-                                durationMinutes:
-                                  event.target
-                                    .value,
-                              }),
-                            )
+                            setForm((current) => ({
+                              ...current,
+                              durationMinutes: event.target.value,
+                            }))
                           }
                           className="h-12 w-full rounded-xl border border-[var(--border)] bg-[#0b0b0b] pl-10 pr-9 text-sm outline-none focus:border-[var(--primary)]"
                         />
@@ -605,14 +526,10 @@ export function ServicesView() {
                           inputMode="decimal"
                           value={form.price}
                           onChange={(event) =>
-                            setForm(
-                              (current) => ({
-                                ...current,
-                                price:
-                                  event.target
-                                    .value,
-                              }),
-                            )
+                            setForm((current) => ({
+                              ...current,
+                              price: event.target.value,
+                            }))
                           }
                           placeholder="0,00"
                           className="h-12 w-full rounded-xl border border-[var(--border)] bg-[#0b0b0b] pl-10 pr-4 text-sm outline-none placeholder:text-[#555] focus:border-[var(--primary)]"
@@ -646,9 +563,7 @@ export function ServicesView() {
                   >
                     <Check size={18} />
 
-                    {editingService
-                      ? "Salvar alterações"
-                      : "Criar serviço"}
+                    {editingService ? "Salvar alterações" : "Criar serviço"}
                   </motion.button>
                 </div>
               </motion.form>
@@ -711,29 +626,21 @@ function ServiceCard({
           </div>
 
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold">
-              {service.name}
-            </h2>
+            <h2 className="truncate text-sm font-semibold">{service.name}</h2>
 
             <div className="mt-1 flex items-center gap-1.5">
               <span
                 className={`size-1.5 rounded-full ${
-                  service.active
-                    ? "bg-emerald-400"
-                    : "bg-zinc-500"
+                  service.active ? "bg-emerald-400" : "bg-zinc-500"
                 }`}
               />
 
               <span
                 className={`text-[10px] ${
-                  service.active
-                    ? "text-emerald-400"
-                    : "text-[var(--muted)]"
+                  service.active ? "text-emerald-400" : "text-[var(--muted)]"
                 }`}
               >
-                {service.active
-                  ? "Ativo"
-                  : "Inativo"}
+                {service.active ? "Ativo" : "Inativo"}
               </span>
             </div>
           </div>
@@ -753,8 +660,7 @@ function ServiceCard({
       </div>
 
       <p className="mt-4 min-h-10 text-xs leading-5 text-[var(--muted)]">
-        {service.description ||
-          "Nenhuma descrição cadastrada."}
+        {service.description || "Nenhuma descrição cadastrada."}
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -793,9 +699,7 @@ function ServiceCard({
               : "bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
           }`}
         >
-          {service.active
-            ? "Desativar serviço"
-            : "Ativar serviço"}
+          {service.active ? "Desativar serviço" : "Ativar serviço"}
         </motion.button>
       </div>
     </motion.article>
@@ -818,9 +722,7 @@ function StatCard({
       }}
       className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-5"
     >
-      <p className="text-xs text-[var(--muted)]">
-        {title}
-      </p>
+      <p className="text-xs text-[var(--muted)]">{title}</p>
 
       <p className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
         {value}
@@ -867,9 +769,7 @@ function FilterButton({
         />
       )}
 
-      <span className="relative z-10">
-        {children}
-      </span>
+      <span className="relative z-10">{children}</span>
     </motion.button>
   );
 }
