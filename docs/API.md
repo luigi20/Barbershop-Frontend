@@ -1,7 +1,7 @@
-﻿# API.md — BarberPro Frontend
+# API.md — BarberPro Frontend
 
-> Última atualização: 2026-08-17
-> Baseado em análise direta do código-fonte.
+> Última atualização: 2026-08-19
+> Baseado em análise direta do código-fonte e contratos confirmados pelo backend.
 
 ---
 
@@ -31,9 +31,9 @@ Nenhum arquivo de cliente HTTP base foi encontrado no projeto.
 | ---------------------- | -------------------------------------------------- | ------------------------------------------------ |
 | mocks/agenda.ts        | professionals[], services[], initialAppointments[] | CONFIRMADO — em uso                              |
 | mocks/services.ts      | initialServices[] (5 serviços)                     | CONFIRMADO — em uso                              |
+| mocks/customers.ts     | initialCustomers[] (10 clientes)                   | CONFIRMADO — em uso                              |
 | mocks/dashboard.ts     | dashboardStats, nextAppointments[]                 | CONFIRMADO — criado, não usado pelos componentes |
 | mocks/appoiments.ts    | —                                                  | CONFIRMADO — vazio (0 bytes, typo no nome)       |
-| mocks/customers.ts     | —                                                  | CONFIRMADO — vazio (0 bytes)                     |
 | mocks/professionals.ts | —                                                  | CONFIRMADO — vazio (0 bytes)                     |
 
 ### Como os dados chegam aos componentes
@@ -68,29 +68,109 @@ O `DashboardPage` (`app/(dashboard)/dashboard/page.tsx`) declara seus dados como
 
 ## Integração com Backend
 
-**A CONFIRMAR:** O backend (NestJS + PostgreSQL) é um repositório separado e não foi analisado.
+### URL Base — CONFIRMADO
 
-| Item                               | Status      |
-| ---------------------------------- | ----------- |
-| URL base da API                    | A CONFIRMAR |
-| Endpoints disponíveis              | A CONFIRMAR |
-| Formato dos DTOs                   | A CONFIRMAR |
-| Autenticação HTTP (Bearer, Cookie) | A CONFIRMAR |
-| Versão da API (v1, v2)             | A CONFIRMAR |
-| CORS configurado                   | A CONFIRMAR |
+```
+http://localhost:3333
+```
 
-Não devem ser inventados endpoints ou formatos de request/response antes de confirmar com o backend.
+- **Sem** prefixo global `/api` ou `/v1`.
+- Backend: NestJS + PostgreSQL (repositório separado).
+
+---
+
+## Endpoints Confirmados
+
+### POST /auth/signin
+
+**CONFIRMADO** — Realiza o login inicial do usuário.
+
+**Request body:**
+
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "login_token": "string",
+  "requires_entity_selection": true,
+  "entities": [
+    {
+      "id": "string",
+      "entity_name": "string",
+      "roles": ["string"]
+    }
+  ]
+}
+```
+
+> O `login_token` retornado é um **challenge token** (não é o access token final).
+> Deve ser usado como `Bearer` no próximo passo (`/auth/select-entity`).
+
+---
+
+### POST /auth/select-entity
+
+**CONFIRMADO** — Seleciona a entidade (barbearia) com a qual o usuário deseja operar.
+
+**Authorization:** `Bearer <challenge-token>` (o `login_token` retornado pelo `/auth/signin`)
+
+**Request body:**
+
+```json
+{
+  "login_token": "string",
+  "entity_id": "UUID"
+}
+```
+
+**Response — caso MFA exigido:**
+
+```json
+{
+  "mfa_required": true,
+  "mfa_token": "string"
+}
+```
+
+**Response — caso sem MFA:**
+
+```json
+{
+  "mfa_required": false,
+  "access_token": "string",
+  "refresh_token": "string"
+}
+```
+
+> ⚠️ **Problema confirmado no backend:** o controller de `/auth/select-entity` executa o service mas **não retorna seu resultado**. A resposta pode chegar sem body. Ver `CURRENT_STATE.md` para detalhes.
+
+---
+
+## Itens Ainda A CONFIRMAR
+
+| Item                                          | Status      |
+| --------------------------------------------- | ----------- |
+| Demais endpoints (agenda, clientes, serviços) | A CONFIRMAR |
+| Formato dos DTOs de domínio                   | A CONFIRMAR |
+| CORS configurado                              | A CONFIRMAR |
+| Estratégia de refresh de token                | A CONFIRMAR |
 
 ---
 
 ## Plano de Integração — A CONFIRMAR
 
-Antes de integrar a API:
+Antes de integrar demais módulos:
 
-1. Confirmar URL base e estrutura de endpoints com o backend.
-2. Criar variáveis de ambiente (.env.local, .env.example).
-3. Criar cliente HTTP base (Axios instance com interceptors).
-4. Criar pasta src/services/ com os services por domínio.
-5. Substituir mocks pelos services reais progressivamente.
-6. Implementar tratamento de erros e loading states.
-7. Adicionar React Query ou SWR para cache e sincronização (A CONFIRMAR — decisão pendente).
+1. Criar variáveis de ambiente (.env.local, .env.example) com `NEXT_PUBLIC_API_URL=http://localhost:3333`.
+2. Criar cliente HTTP base (Axios instance com interceptors de Authorization).
+3. Criar pasta `src/services/` com os services por domínio.
+4. Substituir mocks pelos services reais progressivamente.
+5. Implementar tratamento de erros e loading states.
+6. Adicionar React Query ou SWR para cache e sincronização (A CONFIRMAR — decisão pendente).

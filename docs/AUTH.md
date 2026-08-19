@@ -1,7 +1,7 @@
-﻿# AUTH.md — BarberPro Frontend
+# AUTH.md — BarberPro Frontend
 
-> Última atualização: 2026-08-17
-> Baseado em análise direta do código-fonte.
+> Última atualização: 2026-08-19
+> Baseado em análise direta do código-fonte e contratos confirmados pelo backend.
 
 ---
 
@@ -75,17 +75,45 @@ Nenhum contrato, fluxo ou implementação foi encontrado no código.
 
 ---
 
-## Estratégia de Auth — A CONFIRMAR
+## Estratégia de Auth — Contratos Confirmados
+
+### Fluxo geral — CONFIRMADO
+
+```
+/login
+  ↓ POST /auth/signin  →  challenge token + lista de entidades
+/select-entity
+  ↓ POST /auth/select-entity  →  mfa_token  (se MFA exigido)
+                               ou  access_token + refresh_token
+/mfa  (se mfa_required: true)
+  ↓ A CONFIRMAR
+/dashboard
+```
+
+### Tipos de token — CONFIRMADO
+
+| Token           | Quando gerado                                                  | Uso                                                         |
+| --------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| `login_token`   | Resposta de `/auth/signin`                                     | Challenge token. Usado como Bearer em `/auth/select-entity` |
+| `mfa_token`     | Resposta de `/auth/select-entity` quando `mfa_required: true`  | A CONFIRMAR                                                 |
+| `access_token`  | Resposta de `/auth/select-entity` quando `mfa_required: false` | Token de acesso às rotas protegidas                         |
+| `refresh_token` | Resposta de `/auth/select-entity` quando `mfa_required: false` | A CONFIRMAR — mecanismo de renovação pendente               |
+
+### Multi-tenant — CONFIRMADO
+
+- O backend retorna uma lista de `entities` no login.
+- Cada entidade tem: `id` (UUID), `entity_name` (string), `roles` (array de strings).
+- O usuário deve selecionar uma entidade antes de obter o `access_token`.
+
+### Armazenamento de tokens — A CONFIRMAR
 
 | Item                                           | Status      |
 | ---------------------------------------------- | ----------- |
 | Biblioteca de auth (NextAuth, Auth.js, custom) | A CONFIRMAR |
-| Tipo de token (JWT, session, opaque)           | A CONFIRMAR |
 | Armazenamento (cookie httpOnly, localStorage)  | A CONFIRMAR |
-| Estratégia MFA                                 | A CONFIRMAR |
-| Multi-tenant (select-entity)                   | A CONFIRMAR |
-| Roles e permissões                             | A CONFIRMAR |
-| Integração com o backend NestJS                | A CONFIRMAR |
+| Estratégia de refresh de token                 | A CONFIRMAR |
+| Roles e permissões (uso no frontend)           | A CONFIRMAR |
+| Integração MFA (endpoint, validação)           | A CONFIRMAR |
 
 ---
 

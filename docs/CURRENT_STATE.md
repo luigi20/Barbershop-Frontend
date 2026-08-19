@@ -1,7 +1,8 @@
 # CURRENT_STATE.md — BarberPro Frontend
 
-> Última atualização: 2026-08-18
-> Retrato fiel do estágio atual do projeto, baseado na análise do código.
+> Última atualização: 2026-08-19
+> Retrato fiel do estágio atual do projeto, baseado na análise do código e contratos confirmados pelo backend.
+> Inclui implementação da fundação de autenticação (feat/auth-login-integration).
 
 ---
 
@@ -111,44 +112,84 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 
 ---
 
-## Módulos Não Iniciados
+## Autenticação — PARCIALMENTE IMPLEMENTADO
 
-| Módulo        | Indicação de existência                       |
-| ------------- | --------------------------------------------- |
-| Financeiro    | Link na sidebar, sem rota criada              |
-| Configurações | Link na sidebar, sem rota criada              |
-| Autenticação  | Estrutura de pastas criada, sem implementação |
+### Fundação HTTP (CONFIRMADO: implementada)
+
+| Arquivo                              | Responsabilidade                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/http.server.ts`             | Wrapper fetch server-only com timeout, body seguro e HttpError tipado                                                        |
+| `src/services/auth.client.ts`        | Chamadas same-origin do browser para Route Handlers                                                                          |
+| `src/app/api/auth/signin/route.ts`   | BFF Route Handler — valida, chama NestJS, seta cookie HttpOnly, retorna resposta segura                                      |
+| `src/types/auth.ts`                  | Types confirmados: SignInRequest, AuthEntity, SignInBackendResponse, SignInClientResponse, LoginFormValues, ApiErrorResponse |
+| `src/components/auth/login-form.tsx` | Formulário com react-hook-form + zod, loading, erros e acessibilidade                                                        |
+| `src/app/(auth)/login/page.tsx`      | Server Component com metadata SEO                                                                                            |
+| `.env.local` / `.env.example`        | `API_URL=http://localhost:3333` — server-only, sem NEXT_PUBLIC_                                                              |
+
+### Estratégia de tokens — CONFIRMADO
+
+- `login_token` armazenado em cookie `HttpOnly, SameSite=Lax, MaxAge=300, Path=/api/auth`
+- O browser **nunca** recebe o `login_token` — apenas `requires_entity_selection` e `entities`
+- `access_token` e `refresh_token` — pendentes (select-entity não implementado)
+
+### O que ainda não existe (próximas etapas)
+
+| Item                                   | Status    |
+| -------------------------------------- | --------- |
+| `/select-entity` page + Route Handler  | PLANEJADO |
+| MFA page + Route Handler               | PLANEJADO |
+| `middleware.ts` para proteção de rotas | PLANEJADO |
+| Refresh de token                       | PLANEJADO |
+| Logout                                 | PLANEJADO |
 
 ---
 
-## Integrações Ausentes
+## Módulos Não Iniciados
 
-**CONFIRMADO como ausente:**
+| Módulo        | Indicação de existência          |
+| ------------- | -------------------------------- |
+| Financeiro    | Link na sidebar, sem rota criada |
+| Configurações | Link na sidebar, sem rota criada |
 
-| Integração                             | Status                  |
-| -------------------------------------- | ----------------------- |
-| Comunicação HTTP com backend           | Não implementada        |
-| Autenticação e sessão                  | Não implementada        |
-| Gerenciamento de estado global         | Não implementado        |
-| Persistência de dados (além do reload) | Não implementada        |
-| Testes (Jest)                          | Jest não instalado      |
-| Variáveis de ambiente                  | Nenhum .env configurado |
+---
+
+## Integrações Ausentes / Status HTTP
+
+**CONFIRMADO como ausente ou parcial:**
+
+| Integração                             | Status                                              |
+| -------------------------------------- | --------------------------------------------------- |
+| Comunicação HTTP com backend           | PARCIAL — apenas POST /auth/signin via BFF          |
+| Autenticação e sessão                  | PARCIAL — login implementado, sem proteção de rotas |
+| Gerenciamento de estado global         | Não implementado                                    |
+| Persistência de dados (além do reload) | Não implementada nos módulos de domínio             |
+| Testes (Jest)                          | Jest não instalado                                  |
+| Variáveis de ambiente                  | `.env.local` e `.env.example` criados               |
+
+**CONFIRMADO — Backend disponível:**
+
+| Item           | Valor                              |
+| -------------- | ---------------------------------- |
+| URL base       | `http://localhost:3333`            |
+| Prefixo global | Nenhum (`/api`, `/v1` ausentes)    |
+| Contratos auth | Ver `docs/API.md` e `docs/AUTH.md` |
 
 ---
 
 ## Problemas Técnicos Conhecidos
 
-| #   | Problema                                                                     | Severidade | Localização                             |
-| --- | ---------------------------------------------------------------------------- | ---------- | --------------------------------------- |
-| 1   | Sem autenticação — /dashboard acessível diretamente                          | CRÍTICO    | app/page.tsx                            |
-| 2   | CI de testes falha — npm test não existe no package.json, Jest não instalado | CRÍTICO    | .github/workflows/testes.yaml           |
-| 3   | AgendaView é monólito de 1.236 linhas                                        | ALTO       | components/appointments/agenda-view.tsx |
-| 4   | Dashboard usa dados inline em vez dos mocks                                  | ALTO       | app/(dashboard)/dashboard/page.tsx      |
-| 5   | Dois arquivos de serviços com dados duplicados (agenda.ts e services.ts)     | ALTO       | data/mocks/                             |
-| 6   | Validação silenciosa nos formulários (sem feedback visual de erro)           | MÉDIO      | agenda-view.tsx, services-view.tsx      |
-| 7   | Usuário "Emmanuel Noleto" hardcoded no DashboardShell                        | MÉDIO      | components/layout/dashboard-shell.tsx   |
-| 8   | Typo no nome do arquivo appoiments.ts (falta "n")                            | BAIXO      | data/mocks/appoiments.ts                |
-| 9   | react-hook-form, zod e dayjs instalados mas não usados                       | BAIXO      | package.json                            |
+| #   | Problema                                                                                                                                     | Severidade | Localização                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------- |
+| 1   | Sem autenticação — /dashboard acessível diretamente                                                                                          | CRÍTICO    | app/page.tsx                            |
+| 2   | CI de testes falha — npm test não existe no package.json, Jest não instalado                                                                 | CRÍTICO    | .github/workflows/testes.yaml           |
+| 3   | **[BACKEND CONFIRMADO]** Controller de `/auth/select-entity` executa o service mas não retorna seu resultado — resposta pode chegar sem body | CRÍTICO    | Backend NestJS — repositório separado   |
+| 4   | AgendaView é monólito de 1.236 linhas                                                                                                        | ALTO       | components/appointments/agenda-view.tsx |
+| 5   | Dashboard usa dados inline em vez dos mocks                                                                                                  | ALTO       | app/(dashboard)/dashboard/page.tsx      |
+| 6   | Dois arquivos de serviços com dados duplicados (agenda.ts e services.ts)                                                                     | ALTO       | data/mocks/                             |
+| 7   | Validação silenciosa nos formulários (sem feedback visual de erro)                                                                           | MÉDIO      | agenda-view.tsx, services-view.tsx      |
+| 8   | Usuário "Emmanuel Noleto" hardcoded no DashboardShell                                                                                        | MÉDIO      | components/layout/dashboard-shell.tsx   |
+| 9   | Typo no nome do arquivo appoiments.ts (falta "n")                                                                                            | BAIXO      | data/mocks/appoiments.ts                |
+| 10  | react-hook-form, zod e dayjs instalados mas não usados                                                                                       | BAIXO      | package.json                            |
 
 ---
 
