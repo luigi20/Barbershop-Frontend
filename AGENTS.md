@@ -96,6 +96,13 @@ Quando uma alteração significativa for realizada:
 
 Não atualizar documentação por mudanças triviais.
 
+## Package Manager
+
+- Este projeto utiliza npm.
+- Usar somente `npm` e `npx`.
+- Nunca usar yarn, pnpm ou outro package manager.
+- `package-lock.json` é o único lockfile que deve ser versionado.
+
 ## Git e Branches
 
 - Nunca implementar features diretamente na branch `main`.
