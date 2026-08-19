@@ -3,6 +3,19 @@ name: bug-fix
 description: Investiga e corrige bugs buscando a causa raiz e evitando refactors desnecessários. Use quando houver comportamento incorreto, erro ou regressão.
 ---
 
+## Etapa 0 — Git
+
+Verifique:
+
+git branch --show-current
+git status --short
+
+Não corrija bugs diretamente em `main`.
+
+Sugira branches no padrão:
+
+fix/<descricao-curta>
+
 # Bug Fix
 
 ## Regra principal

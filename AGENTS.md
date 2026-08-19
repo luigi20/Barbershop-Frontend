@@ -96,4 +96,16 @@ Quando uma alteração significativa for realizada:
 
 Não atualizar documentação por mudanças triviais.
 
+## Git e Branches
+
+- Nunca implementar features diretamente na branch `main`.
+- Nunca implementar correções diretamente na branch `main`.
+- Antes de modificar código, verificar a branch atual com `git branch --show-current`.
+- Para novas funcionalidades, trabalhar em branches `feat/<nome>`.
+- Para correções, trabalhar em branches `fix/<nome>`.
+- Para refactors, trabalhar em branches `refactor/<nome>`.
+- Para tarefas de configuração/manutenção, usar `chore/<nome>`.
+- Não trocar, criar, excluir ou fazer merge de branches sem solicitação do usuário.
+- Nunca executar `git push`, `git merge`, `git rebase` ou operações destrutivas automaticamente.
+
 <!-- END:nextjs-agent-rules -->

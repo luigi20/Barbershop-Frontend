@@ -3,6 +3,31 @@ name: implement-feature
 description: Implementa novas funcionalidades respeitando a arquitetura e os padrões existentes do projeto.
 ---
 
+## Etapa 0 — Git
+
+Antes de qualquer modificação, execute:
+
+git branch --show-current
+git status --short
+
+Se a branch atual for `main`:
+
+- não modifique nenhum arquivo;
+- informe que uma branch de feature deve ser criada;
+- sugira um nome no padrão `feat/<nome>`;
+- aguarde o usuário criar ou autorizar a criação da branch.
+
+Se existirem alterações não commitadas que não pertençam à tarefa atual,
+informe antes de prosseguir.
+
+Nunca faça automaticamente:
+
+- git push
+- git merge
+- git rebase
+- git reset
+- git clean
+
 # Implement Feature
 
 Antes de implementar:

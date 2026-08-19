@@ -1,6 +1,6 @@
-﻿# CURRENT_STATE.md — BarberPro Frontend
+# CURRENT_STATE.md — BarberPro Frontend
 
-> Última atualização: 2026-08-17
+> Última atualização: 2026-08-18
 > Retrato fiel do estágio atual do projeto, baseado na análise do código.
 
 ---
@@ -40,6 +40,21 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 - Stats calculadas (total, ativos, preço médio, duração média)
 - **Dados persistem apenas em memória**
 
+### Clientes — CONFIRMADO: Funcional (dados mockados)
+
+- Localização: `components/clients/clients-view.tsx`
+- 4 componentes com responsabilidades separadas: `clients-view`, `client-card`, `client-form-modal`, `client-detail-drawer`
+- Rota: `/clientes` em `app/(dashboard)/clientes/page.tsx`
+- Busca por nome ou telefone
+- Filtro por status (todos/ativos/inativos)
+- Cards de clientes com avatar (iniciais), status, telefone, stats de agendamento e gasto
+- Modal criar/editar cliente (bottom-sheet mobile / centrado desktop)
+- Drawer lateral de detalhes do cliente (slide-in desktop / bottom-sheet mobile)
+- Stats: total, ativos, agendamentos acumulados, receita acumulada
+- Estado vazio com mensagem contextual
+- IDs gerados via crypto.randomUUID()
+- **Dados persistem apenas em memória** — reiniciar a página perde alterações
+
 ### Shell de Navegação — CONFIRMADO: Implementado
 
 - Localização: `components/layout/dashboard-shell.tsx`
@@ -57,6 +72,7 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 
 - `data/mocks/agenda.ts` — professionals, services, initialAppointments: CONFIRMADO em uso
 - `data/mocks/services.ts` — initialServices (5 serviços): CONFIRMADO em uso
+- `data/mocks/customers.ts` — initialCustomers (10 clientes): CONFIRMADO em uso
 - `data/mocks/dashboard.ts` — stats e appointments: CRIADO mas não consumido pelos componentes
 
 ---
@@ -99,7 +115,6 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 
 | Módulo        | Indicação de existência                       |
 | ------------- | --------------------------------------------- |
-| Clientes      | Link na sidebar, sem rota criada              |
 | Financeiro    | Link na sidebar, sem rota criada              |
 | Configurações | Link na sidebar, sem rota criada              |
 | Autenticação  | Estrutura de pastas criada, sem implementação |
