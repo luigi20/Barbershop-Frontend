@@ -75,7 +75,10 @@ export function LoginForm() {
         // Automatic entity selection for the single entity
         const entityId = entities[0].id;
         try {
-          const selectResponse = await selectEntity(entityId, response.login_token);
+          const selectResponse = await selectEntity(
+            entityId,
+            response.login_token,
+          );
           if (selectResponse.mfa_required) {
             router.push("/mfa");
           } else {

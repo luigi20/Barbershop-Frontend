@@ -15,7 +15,10 @@ interface SelectEntityFormProps {
   loginToken: string;
 }
 
-export function SelectEntityForm({ entities, loginToken }: SelectEntityFormProps) {
+export function SelectEntityForm({
+  entities,
+  loginToken,
+}: SelectEntityFormProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
