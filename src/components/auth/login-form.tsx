@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -228,6 +229,17 @@ export function LoginForm() {
             )}
           </motion.button>
         </form>
+
+        {/* Link to signup */}
+        <p className="mt-6 text-center text-sm text-[var(--muted)]">
+          Não tem conta?{" "}
+          <Link
+            href="/cadastro"
+            className="font-medium text-[var(--primary)] underline-offset-4 hover:underline"
+          >
+            Cadastre-se
+          </Link>
+        </p>
       </motion.div>
     </MotionConfig>
   );

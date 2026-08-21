@@ -9,6 +9,7 @@ import type {
   ApiErrorResponse,
   LoginFormValues,
   SignInClientResponse,
+  SignUpFormValues,
 } from "@/types/auth";
 
 export class AuthClientError extends Error {
@@ -47,4 +48,27 @@ export async function signIn(
   }
 
   return response.json() as Promise<SignInClientResponse>;
+}
+
+/**
+ * Sends signup data to the BFF Route Handler.
+ * On success (2xx), the caller should redirect to /login.
+ */
+export async function signUp(data: SignUpFormValues): Promise<void> {
+  const response = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    let message = "Ocorreu um erro inesperado. Tente novamente.";
+    try {
+      const errorBody = (await response.json()) as ApiErrorResponse;
+      if (errorBody?.message) message = errorBody.message;
+    } catch {
+      // response body is not JSON — use default message
+    }
+    throw new AuthClientError(message, response.status);
+  }
 }
