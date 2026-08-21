@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import { cn } from "@/lib/utils";
-import { signIn, AuthClientError } from "@/services/auth.client";
+import { signIn, selectEntity, AuthClientError } from "@/services/auth.client";
 import type { LoginFormValues } from "@/types/auth";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -63,8 +63,37 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     setGlobalError(null);
     try {
-      await signIn(values);
-      // Redirect to entity selection — the challenge cookie is already set by the BFF.
+      const response = await signIn(values);
+      const entities = response.entities || [];
+
+      if (entities.length === 0) {
+        setGlobalError("Sua conta não possui nenhuma barbearia vinculada.");
+        return;
+      }
+
+      if (entities.length === 1) {
+        // Automatic entity selection for the single entity
+        const entityId = entities[0].id;
+        try {
+          const selectResponse = await selectEntity(entityId, response.login_token);
+          if (selectResponse.mfa_required) {
+            router.push("/mfa");
+          } else {
+            router.push("/dashboard");
+          }
+        } catch (selectError) {
+          if (selectError instanceof AuthClientError) {
+            setGlobalError(selectError.message);
+          } else {
+            setGlobalError(
+              "Ocorreu um erro ao selecionar a barbearia automaticamente.",
+            );
+          }
+        }
+        return;
+      }
+
+      // Se passou daqui, entities.length > 1
       router.push("/select-entity");
     } catch (error) {
       if (error instanceof AuthClientError) {

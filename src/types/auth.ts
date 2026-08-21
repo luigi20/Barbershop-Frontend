@@ -29,6 +29,7 @@ export interface SignInBackendResponse {
 export interface SignInClientResponse {
   requires_entity_selection: boolean;
   entities: AuthEntity[];
+  login_token: string;
 }
 
 // ─── Form types ───────────────────────────────────────────────────────────────
@@ -73,4 +74,41 @@ export interface SignUpFormValues {
   entity_name: string;
   phone: string;
   document: string;
+}
+
+// ─── Select Entity types ──────────────────────────────────────────────────────
+
+/** What the browser sends to POST /api/auth/select-entity (BFF). */
+export interface SelectEntityClientRequest {
+  entity_id: string;
+  login_token: string;
+}
+
+/** What the BFF sends to POST /auth/select-entity (NestJS backend). */
+export interface SelectEntityBackendRequest {
+  /** The challenge token, read from the HttpOnly cookie by the BFF. */
+  login_token: string;
+  entity_id: string;
+}
+
+/** Backend response when MFA is required. */
+export interface SelectEntityMfaResponse {
+  mfa_required: true;
+  mfa_token: string;
+}
+
+/** Backend response when MFA is NOT required. */
+export interface SelectEntitySessionResponse {
+  mfa_required: false;
+  access_token: string;
+  refresh_token: string;
+}
+
+/** Discriminated union of all confirmed backend responses. */
+export type SelectEntityBackendResponse =
+  SelectEntityMfaResponse | SelectEntitySessionResponse;
+
+/** Safe response returned by the BFF to the browser — no tokens exposed. */
+export interface SelectEntityClientResponse {
+  mfa_required: boolean;
 }

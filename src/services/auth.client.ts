@@ -8,6 +8,7 @@
 import type {
   ApiErrorResponse,
   LoginFormValues,
+  SelectEntityClientResponse,
   SignInClientResponse,
   SignUpFormValues,
 } from "@/types/auth";
@@ -71,4 +72,32 @@ export async function signUp(data: SignUpFormValues): Promise<void> {
     }
     throw new AuthClientError(message, response.status);
   }
+}
+
+/**
+ * Sends the selected entity ID to the BFF Route Handler.
+ * challenge_token is automatically sent via HttpOnly cookie.
+ */
+export async function selectEntity(
+  entityId: string,
+  loginToken: string,
+): Promise<SelectEntityClientResponse> {
+  const response = await fetch("/api/auth/select-entity", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ entity_id: entityId, login_token: loginToken }),
+  });
+
+  if (!response.ok) {
+    let message = "Ocorreu um erro inesperado. Tente novamente.";
+    try {
+      const errorBody = (await response.json()) as ApiErrorResponse;
+      if (errorBody?.message) message = errorBody.message;
+    } catch {
+      // response body is not JSON — use default message
+    }
+    throw new AuthClientError(message, response.status);
+  }
+
+  return response.json() as Promise<SelectEntityClientResponse>;
 }

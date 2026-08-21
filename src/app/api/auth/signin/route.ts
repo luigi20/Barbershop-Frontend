@@ -85,10 +85,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Build safe client response — intentionally excludes login_token
+  // 3. Build safe client response
   const clientResponse: SignInClientResponse = {
     requires_entity_selection: backendData.requires_entity_selection,
-    entities: backendData.entities,
+    entities: backendData.entities || [],
+    login_token: backendData.login_token,
   };
 
   // 4. Set login_token as HttpOnly cookie (challenge phase)
@@ -101,6 +102,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     path: "/api/auth",
     maxAge: CHALLENGE_COOKIE_MAX_AGE,
   });
+
+  // 5. Store non-sensitive entities in a hint cookie for the /select-entity page
+  if (backendData.entities && backendData.entities.length > 0) {
+    response.cookies.set(
+      "entities_hint",
+      JSON.stringify(backendData.entities),
+      {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/", // Available to the whole app to be read by Server Components
+        maxAge: CHALLENGE_COOKIE_MAX_AGE,
+      },
+    );
+  }
 
   return response;
 }
