@@ -13,8 +13,9 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, useState, useEffect } from "react";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -62,6 +63,36 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
     return pathname.startsWith(href);
   }
+
+  const router = useRouter();
+  const user = useCurrentUser();
+
+  useEffect(() => {
+    if (user.status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [user.status, router]);
+
+  function getInitials(name?: string) {
+    if (!name) return "US";
+    const parts = name.trim().split(" ").filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  function formatRole(role?: string) {
+    if (!role) return "Usuário";
+    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  }
+
+  const isLoading =
+    user.status === "loading" || user.status === "unauthenticated";
+  const profile = user.profile;
+  const initials = isLoading ? "" : getInitials(profile?.name);
+  const userName = isLoading ? "Carregando..." : profile?.name || "Usuário";
+  const userRole = isLoading ? "Aguarde..." : formatRole(profile?.roles?.[0]);
 
   return (
     <div className="min-h-dvh bg-[var(--background)]">
@@ -132,14 +163,23 @@ export function DashboardShell({ children }: DashboardShellProps) {
           <div className="mt-4 border-t border-[var(--border-soft)] pt-4">
             <button className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[var(--surface-secondary)]">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-sm font-semibold text-[var(--primary)]">
-                EN
+                {isLoading ? (
+                  <span className="size-4 animate-pulse rounded-full bg-[var(--primary)] opacity-50" />
+                ) : profile?.photo ? (
+                  <img
+                    src={profile.photo}
+                    alt={userName}
+                    className="size-full rounded-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Emmanuel Noleto</p>
-
+                <p className="truncate text-sm font-medium">{userName}</p>
                 <p className="truncate text-xs text-[var(--muted)]">
-                  Administrador
+                  {userRole}
                 </p>
               </div>
 
@@ -252,8 +292,18 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <Menu size={19} />
             </button>
 
-            <div className="ml-2 hidden size-10 items-center justify-center rounded-full bg-[var(--primary-soft)] text-xs font-semibold text-[var(--primary)] sm:flex">
-              EN
+            <div className="ml-2 hidden size-10 items-center justify-center rounded-full bg-[var(--primary-soft)] text-xs font-semibold text-[var(--primary)] sm:flex overflow-hidden">
+              {isLoading ? (
+                <span className="size-4 animate-pulse rounded-full bg-[var(--primary)] opacity-50" />
+              ) : profile?.photo ? (
+                <img
+                  src={profile.photo}
+                  alt={userName}
+                  className="size-full object-cover"
+                />
+              ) : (
+                initials
+              )}
             </div>
           </div>
         </header>

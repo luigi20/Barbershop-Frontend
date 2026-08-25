@@ -112,3 +112,16 @@ export type SelectEntityBackendResponse =
 export interface SelectEntityClientResponse {
   mfa_required: boolean;
 }
+
+// ─── Profile types ────────────────────────────────────────────────────────────
+
+export interface MeProfile {
+  id: string;
+  identity_id: string;
+  name: string;
+  photo: string | null;
+  phone: string | null;
+  roles: string[];
+  created_at: string;
+  updated_at: string;
+}
