@@ -139,12 +139,13 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 | `/select-entity` page + Route Handler  | PLANEJADO |
 | MFA page + Route Handler               | PLANEJADO |
 | `middleware.ts` para proteção de rotas | PLANEJADO |
-| Refresh de token                       | PLANEJADO |
 | Logout                                 | PLANEJADO |
 
-### Integração de Profile — CONFIRMADO
+### Integração de Profile e Refresh Automático — CONFIRMADO
 
-- `GET /api/auth/me` — BFF Route Handler que obtém os dados do backend.
+- `GET /api/auth/me` — BFF Route Handler que obtém os dados do backend. Envolto no `withAuthRoute`.
+- Centralização do Refresh: `withAuthRoute` intercepta o erro 401, renova o token acessando `/auth/refreshtoken`, atualiza o cookie `access_token` e repete a chamada uma única vez. Tokens nunca chegam ao browser.
+- O `refresh_token` está disponível com `path: "/api"`.
 - Hook `useCurrentUser` — Reativo para estado global de profile nos Client Components.
 - `DashboardShell` utiliza a foto, o nome e a role do usuário.
 

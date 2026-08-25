@@ -155,12 +155,40 @@ http://localhost:3333
 
 ## Itens Ainda A CONFIRMAR
 
-| Item                                          | Status      |
-| --------------------------------------------- | ----------- |
-| Demais endpoints (agenda, clientes, serviços) | A CONFIRMAR |
-| Formato dos DTOs de domínio                   | A CONFIRMAR |
-| CORS configurado                              | A CONFIRMAR |
-| Estratégia de refresh de token                | A CONFIRMAR |
+| Item                                          | Status                                                           |
+| --------------------------------------------- | ---------------------------------------------------------------- |
+| Demais endpoints (agenda, clientes, serviços) | A CONFIRMAR                                                      |
+| Formato dos DTOs de domínio                   | A CONFIRMAR                                                      |
+| CORS configurado                              | A CONFIRMAR                                                      |
+| Estratégia de refresh de token                | CONFIRMADO — BFF intercepta 401 e chama POST /auth/refreshtoken. |
+
+---
+
+## Endpoints de Autenticação (Refresh)
+
+### POST /auth/refreshtoken (Backend)
+
+**CONFIRMADO** — Utilizado pelo BFF para renovar o `access_token` expirado.
+
+**Authorization:** `Bearer <refresh_token>`
+
+**Request body:**
+
+```json
+{
+  "refresh_token": "string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "string"
+}
+```
+
+> ⚠️ O backend atual não rotaciona o `refresh_token`. Ele retorna apenas o novo `access_token`. O BFF substitui o cookie de `access_token` transparente para o cliente. O `refresh_token` é mantido até expirar.
 
 ---
 

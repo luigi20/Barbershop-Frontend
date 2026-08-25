@@ -1,32 +1,17 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { http, HttpError } from "@/lib/http.server";
+import { withAuthRoute } from "@/lib/auth-route.server";
 import type { MeProfile } from "@/types/auth";
 
-const ACCESS_TOKEN_COOKIE = "access_token";
-
-export async function GET() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { message: "Sessão expirada. Faça login novamente." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-
-  try {
+export async function GET(req: NextRequest) {
+  return withAuthRoute(req, async (req, accessToken) => {
     const backendProfile = await http.get<MeProfile>("/me_profile", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!backendProfile) {
-      return NextResponse.json(
-        { message: "Resposta inesperada do servidor." },
-        { status: 502, headers: { "Cache-Control": "no-store" } },
-      );
+      throw new HttpError(502, "Resposta inesperada do servidor.");
     }
 
     // Retorne explicitamente apenas campos permitidos e presentes na interface MeProfile.
@@ -45,29 +30,5 @@ export async function GET() {
       status: 200,
       headers: { "Cache-Control": "no-store" },
     });
-  } catch (error) {
-    if (error instanceof HttpError) {
-      if (error.statusCode === 401 || error.statusCode === 403) {
-        return NextResponse.json(
-          { message: "Sessão inválida ou expirada. Faça login novamente." },
-          { status: 401, headers: { "Cache-Control": "no-store" } },
-        );
-      }
-      if (error.statusCode >= 500) {
-        return NextResponse.json(
-          { message: "Erro interno do servidor. Tente novamente." },
-          { status: 502, headers: { "Cache-Control": "no-store" } },
-        );
-      }
-      return NextResponse.json(
-        { message: error.message },
-        { status: error.statusCode, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-
-    return NextResponse.json(
-      { message: "Não foi possível conectar ao servidor. Tente novamente." },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
-  }
+  });
 }

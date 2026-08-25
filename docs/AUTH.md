@@ -92,12 +92,12 @@ Nenhum contrato, fluxo ou implementação foi encontrado no código.
 
 ### Tipos de token — CONFIRMADO
 
-| Token           | Quando gerado                                                  | Uso                                                         |
-| --------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
-| `login_token`   | Resposta de `/auth/signin`                                     | Challenge token. Usado como Bearer em `/auth/select-entity` |
-| `mfa_token`     | Resposta de `/auth/select-entity` quando `mfa_required: true`  | A CONFIRMAR                                                 |
-| `access_token`  | Resposta de `/auth/select-entity` quando `mfa_required: false` | Token de acesso às rotas protegidas                         |
-| `refresh_token` | Resposta de `/auth/select-entity` quando `mfa_required: false` | A CONFIRMAR — mecanismo de renovação pendente               |
+| Token           | Quando gerado                                                  | Uso                                                              |
+| --------------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `login_token`   | Resposta de `/auth/signin`                                     | Challenge token. Usado como Bearer em `/auth/select-entity`      |
+| `mfa_token`     | Resposta de `/auth/select-entity` quando `mfa_required: true`  | A CONFIRMAR                                                      |
+| `access_token`  | Resposta de `/auth/select-entity` quando `mfa_required: false` | Token de acesso às rotas protegidas. Expira em 1 hora.           |
+| `refresh_token` | Resposta de `/auth/select-entity` quando `mfa_required: false` | Usado pelo BFF para renovar o `access_token`. Expira em 30 dias. |
 
 ### Multi-tenant — CONFIRMADO
 
@@ -105,15 +105,15 @@ Nenhum contrato, fluxo ou implementação foi encontrado no código.
 - Cada entidade tem: `id` (UUID), `entity_name` (string), `roles` (array de strings).
 - O usuário deve selecionar uma entidade antes de obter o `access_token`.
 
-### Armazenamento de tokens — A CONFIRMAR
+### Armazenamento de tokens — CONFIRMADO
 
-| Item                                           | Status      |
-| ---------------------------------------------- | ----------- |
-| Biblioteca de auth (NextAuth, Auth.js, custom) | A CONFIRMAR |
-| Armazenamento (cookie httpOnly, localStorage)  | A CONFIRMAR |
-| Estratégia de refresh de token                 | A CONFIRMAR |
-| Roles e permissões (uso no frontend)           | A CONFIRMAR |
-| Integração MFA (endpoint, validação)           | A CONFIRMAR |
+| Item                                           | Status                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| Biblioteca de auth (NextAuth, Auth.js, custom) | Custom                                                                   |
+| Armazenamento (cookie httpOnly, localStorage)  | HttpOnly cookie server-side apenas                                       |
+| Estratégia de refresh de token                 | Automático via BFF wrapper (`withAuthRoute`). Retries limitados a 1 vez. |
+| Roles e permissões (uso no frontend)           | A CONFIRMAR                                                              |
+| Integração MFA (endpoint, validação)           | A CONFIRMAR                                                              |
 
 ---
 

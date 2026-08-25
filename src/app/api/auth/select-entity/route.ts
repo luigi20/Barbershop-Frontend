@@ -160,11 +160,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       path: "/",
       maxAge: ACCESS_TOKEN_MAX_AGE,
     });
+    response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/api/auth",
+      maxAge: 0,
+    });
+
     response.cookies.set(REFRESH_TOKEN_COOKIE, backendData.refresh_token, {
       httpOnly: true,
       sameSite: "lax",
       secure: isProduction,
-      path: "/api/auth",
+      path: "/api",
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
   }
