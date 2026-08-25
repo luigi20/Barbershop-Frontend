@@ -1,4 +1,4 @@
-﻿# ARCHITECTURE.md — BarberPro Frontend
+# ARCHITECTURE.md — BarberPro Frontend
 
 > Última atualização: 2026-08-17
 > Baseado em análise direta do código-fonte. Nenhuma inferência não comprovada.

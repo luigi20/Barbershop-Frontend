@@ -160,18 +160,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       path: "/",
       maxAge: ACCESS_TOKEN_MAX_AGE,
     });
+    // Limpar cookies legados com paths anteriores para evitar duplicatas
     response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
       httpOnly: true,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 0,
     });
+    response.cookies.set(REFRESH_TOKEN_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/api",
+      maxAge: 0,
+    });
 
+    // Gravar o refresh_token em path "/" para que o proxy possa verificar
+    // sua existência em rotas como /dashboard, /agenda, etc.
     response.cookies.set(REFRESH_TOKEN_COOKIE, backendData.refresh_token, {
       httpOnly: true,
       sameSite: "lax",
       secure: isProduction,
-      path: "/api",
+      path: "/",
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
   }

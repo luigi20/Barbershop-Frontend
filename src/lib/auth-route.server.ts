@@ -8,12 +8,50 @@ const REFRESH_TOKEN_COOKIE = "refresh_token";
 /** 60 minutes — provisional; confirm actual expiry with backend. */
 const ACCESS_TOKEN_MAX_AGE = 60 * 60;
 
+/** Executa POST /auth/refreshtoken e retorna o novo access_token. */
+async function refreshAccessToken(refreshToken: string): Promise<string> {
+  const result = await http.post<{ access_token: string }>(
+    "/auth/refreshtoken",
+    {
+      headers: { Authorization: `Bearer ${refreshToken}` },
+      body: { refresh_token: refreshToken },
+    },
+  );
+
+  if (!result?.access_token) {
+    throw new Error("Resposta de refresh inválida.");
+  }
+
+  return result.access_token;
+}
+
+/** Grava o novo access_token como cookie HttpOnly na resposta. */
+function setAccessTokenCookie(response: NextResponse, token: string): void {
+  response.cookies.set(ACCESS_TOKEN_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: ACCESS_TOKEN_MAX_AGE,
+  });
+}
+
 /**
  * Wrapper for BFF Route Handlers that require authentication.
  * Centralizes the automatic access token refresh logic.
  *
+ * Supports two flows:
+ *
+ * CASE A — access_token present:
+ *   Executes handler. If backend returns 401, attempts one refresh and retries.
+ *
+ * CASE B — access_token absent:
+ *   If refresh_token exists, calls /auth/refreshtoken directly,
+ *   then executes the handler once with the new token.
+ *   No second refresh is attempted if the handler fails after refresh.
+ *
  * @param req The original NextRequest
- * @param handler The route logic that needs the access_token
+ * @param handler The route logic that receives a valid access_token
  */
 export async function withAuthRoute(
   req: NextRequest,
@@ -21,22 +59,58 @@ export async function withAuthRoute(
 ): Promise<NextResponse> {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
+  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
 
+  // ─── CASO B — access_token ausente ────────────────────────────────────────
   if (!accessToken) {
-    return NextResponse.json(
-      { message: "Sessão expirada. Faça login novamente." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
+    if (!refreshToken) {
+      return NextResponse.json(
+        { message: "Sessão expirada. Faça login novamente." },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    // Tentar renovar o access_token antes mesmo de chamar o handler.
+    let newToken: string;
+    try {
+      newToken = await refreshAccessToken(refreshToken);
+    } catch {
+      return NextResponse.json(
+        { message: "Sessão inválida ou expirada. Faça login novamente." },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    // Executar o handler UMA VEZ com o novo token. Sem segundo refresh.
+    let response: NextResponse;
+    try {
+      response = await handler(req, newToken);
+    } catch (handlerError) {
+      if (handlerError instanceof HttpError) {
+        return NextResponse.json(
+          { message: handlerError.message },
+          {
+            status: handlerError.statusCode,
+            headers: { "Cache-Control": "no-store" },
+          },
+        );
+      }
+      return NextResponse.json(
+        { message: "Erro interno do servidor. Tente novamente." },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    setAccessTokenCookie(response, newToken);
+    return response;
   }
 
+  // ─── CASO A — access_token presente ───────────────────────────────────────
   try {
-    // 1. Executa o manipulador originalmente com o token atual
     return await handler(req, accessToken);
   } catch (error) {
-    // Apenas tenta refresh se for um erro 401 explícito
+    // Tenta refresh somente para 401 — 403 e outros erros passam direto.
     if (error instanceof HttpError && error.statusCode === 401) {
-      const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
-
       if (!refreshToken) {
         return NextResponse.json(
           { message: "Sessão expirada. Faça login novamente." },
@@ -44,39 +118,21 @@ export async function withAuthRoute(
         );
       }
 
-      // 2. Tenta renovar o access_token chamando o NestJS
-      let refreshResult: { access_token: string };
+      let newToken: string;
       try {
-        const result = await http.post<{ access_token: string }>(
-          "/auth/refreshtoken",
-          {
-            headers: { Authorization: `Bearer ${refreshToken}` },
-            body: { refresh_token: refreshToken },
-          },
-        );
-
-        if (!result || !result.access_token) {
-          throw new Error("Invalid response");
-        }
-        refreshResult = result;
+        newToken = await refreshAccessToken(refreshToken);
       } catch {
-        // Se a tentativa de refresh falhar (400, 401, erro de rede),
-        // não entra em loop. Retorna sessão inválida direto.
         return NextResponse.json(
           { message: "Sessão inválida ou expirada. Faça login novamente." },
           { status: 401, headers: { "Cache-Control": "no-store" } },
         );
       }
 
-      const newAccessToken = refreshResult.access_token;
-
-      // 3. Tenta novamente a requisição original apenas UMA VEZ com o novo token
+      // Retry UMA única vez com o novo token. Sem segundo refresh.
       let response: NextResponse;
       try {
-        response = await handler(req, newAccessToken);
+        response = await handler(req, newToken);
       } catch (retryError) {
-        // Se a SEGUNDA tentativa falhar (mesmo sendo um 401), não faremos um novo refresh.
-        // Apenas repassamos o erro ao frontend.
         if (retryError instanceof HttpError) {
           return NextResponse.json(
             { message: retryError.message },
@@ -86,27 +142,17 @@ export async function withAuthRoute(
             },
           );
         }
-
         return NextResponse.json(
           { message: "Erro interno do servidor. Tente novamente." },
           { status: 502, headers: { "Cache-Control": "no-store" } },
         );
       }
 
-      // 4. Modifica o NextResponse para setar o novo access_token pro browser
-      response.cookies.set(ACCESS_TOKEN_COOKIE, newAccessToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: ACCESS_TOKEN_MAX_AGE,
-      });
-
+      setAccessTokenCookie(response, newToken);
       return response;
     }
 
-    // Se não for um erro tratável pelo refresh (ex: 403, 500, falhas de rede),
-    // apenas retornamos o erro ao frontend.
+    // Erros não tratáveis pelo refresh (403, 500, falhas de rede).
     if (error instanceof HttpError) {
       return NextResponse.json(
         { message: error.message },
