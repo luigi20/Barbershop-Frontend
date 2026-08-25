@@ -164,6 +164,38 @@ http://localhost:3333
 
 ---
 
+## Endpoints de Profile
+
+### GET /api/auth/me (BFF)
+
+**CONFIRMADO** — Retorna o profile do usuário logado, lendo o `access_token` do cookie HttpOnly.
+
+**Response:**
+Retorna o objeto `MeProfile`.
+
+### GET /me_profile (Backend)
+
+**CONFIRMADO** — Retorna os dados do perfil do usuário autenticado no backend.
+
+**Authorization:** `Bearer <access_token>`
+
+**Response:**
+
+```json
+{
+  "id": "string",
+  "identity_id": "string",
+  "name": "string",
+  "photo": "string | null",
+  "phone": "string | null",
+  "roles": ["string"],
+  "created_at": "ISO date string",
+  "updated_at": "ISO date string"
+}
+```
+
+---
+
 ## Plano de Integração — A CONFIRMAR
 
 Antes de integrar demais módulos:

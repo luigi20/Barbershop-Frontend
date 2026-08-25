@@ -142,6 +142,12 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 | Refresh de token                       | PLANEJADO |
 | Logout                                 | PLANEJADO |
 
+### Integração de Profile — CONFIRMADO
+
+- `GET /api/auth/me` — BFF Route Handler que obtém os dados do backend.
+- Hook `useCurrentUser` — Reativo para estado global de profile nos Client Components.
+- `DashboardShell` utiliza a foto, o nome e a role do usuário.
+
 ---
 
 ## Módulos Não Iniciados
@@ -187,9 +193,8 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 | 5   | Dashboard usa dados inline em vez dos mocks                                                                                                  | ALTO       | app/(dashboard)/dashboard/page.tsx      |
 | 6   | Dois arquivos de serviços com dados duplicados (agenda.ts e services.ts)                                                                     | ALTO       | data/mocks/                             |
 | 7   | Validação silenciosa nos formulários (sem feedback visual de erro)                                                                           | MÉDIO      | agenda-view.tsx, services-view.tsx      |
-| 8   | Usuário "Emmanuel Noleto" hardcoded no DashboardShell                                                                                        | MÉDIO      | components/layout/dashboard-shell.tsx   |
-| 9   | Typo no nome do arquivo appoiments.ts (falta "n")                                                                                            | BAIXO      | data/mocks/appoiments.ts                |
-| 10  | react-hook-form, zod e dayjs instalados mas não usados                                                                                       | BAIXO      | package.json                            |
+| 8   | Typo no nome do arquivo appoiments.ts (falta "n")                                                                                            | BAIXO      | data/mocks/appoiments.ts                |
+| 9   | react-hook-form, zod e dayjs instalados mas não usados                                                                                       | BAIXO      | package.json                            |
 
 ---
 
