@@ -7,41 +7,24 @@
 
 ## Status Atual
 
-**CONFIRMADO: Autenticação não está implementada.**
+**CONFIRMADO:** signup, signin, seleção de entidade, cookies HttpOnly de access e
+refresh, refresh automático, profile autenticado, proteção de rotas privadas e
+logout estão implementados no frontend.
 
-Nenhum mecanismo de autenticação ou autorização existe no código atual.
-Este documento registra o que existe, o que foi planejado como estrutura, e o que ainda é desconhecido.
+**PLANEJADO:** MFA e autorização por roles não estão implementados.
 
 ---
 
 ## O Que Existe Hoje
 
-### Estrutura de Rotas de Auth — PLANEJADO
+**CONFIRMADO:**
 
-Os Route Groups e páginas foram criados como placeholders, mas estão todos vazios:
-
-| Arquivo                      | Bytes | Status                   |
-| ---------------------------- | ----- | ------------------------ |
-| app/(auth)/login/page.tsx    | 0     | PLANEJADO — vazio        |
-| app/(auth)/cadastro/page.tsx | 0     | PLANEJADO — vazio        |
-| app/(auth)/mfa/              | —     | PLANEJADO — sem page.tsx |
-| app/(auth)/select-entity/    | —     | PLANEJADO — sem page.tsx |
-| components/auth/             | —     | PLANEJADO — pasta vazia  |
-| types/auth.ts                | 0     | PLANEJADO — vazio        |
-
-### Rota Raiz — CONFIRMADO
-
-```ts
-// src/app/page.tsx
-redirect("/dashboard"); // redirect direto, sem verificação de sessão
-```
-
-Qualquer visitante acessa /dashboard sem nenhuma verificação.
-
-### Middleware — CONFIRMADO AUSENTE
-
-Não existe `middleware.ts` ou `middleware.tsx` na raiz nem em `src/`.
-Sem middleware, não há como proteger rotas no nível do servidor.
+- Páginas de cadastro, login e seleção de entidade.
+- Route Handlers BFF para signup, signin, select-entity, profile e logout.
+- `src/proxy.ts` protegendo as rotas privadas.
+- `withAuthRoute` centralizando refresh automático e retry único.
+- Cookies de sessão HttpOnly, sem exposição de access ou refresh ao browser.
+- Profile real consumido pelo `DashboardShell`.
 
 ---
 
@@ -49,29 +32,20 @@ Sem middleware, não há como proteger rotas no nível do servidor.
 
 **CONFIRMADO como ausente:**
 
-| Item                    | Status            |
-| ----------------------- | ----------------- |
-| NextAuth / Auth.js      | Não instalado     |
-| JWT handling            | Não implementado  |
-| Cookies de sessão       | Não implementados |
-| Context de autenticação | Não existe        |
-| Guards de rota          | Não existem       |
-| middleware.ts           | Não existe        |
-| Refresh de token        | Não implementado  |
-| Logout                  | Não implementado  |
+| Item                    | Status           |
+| ----------------------- | ---------------- |
+| NextAuth / Auth.js      | Não instalado    |
+| Context de autenticação | Não existe       |
+| MFA                     | Não implementado |
+| RBAC                    | Não implementado |
 
 ---
 
-## Fluxo Planejado — PLANEJADO (inferido pela estrutura de pastas)
-
-A estrutura de rotas sugere a intenção de um fluxo:
+## Fluxo Atual — CONFIRMADO
 
 ```
-/login → /mfa → /select-entity → /dashboard
+/cadastro → /login → /select-entity → /dashboard → /login (logout)
 ```
-
-Esta inferência é baseada exclusivamente na existência das pastas.
-Nenhum contrato, fluxo ou implementação foi encontrado no código.
 
 ---
 
@@ -117,13 +91,24 @@ Nenhum contrato, fluxo ou implementação foi encontrado no código.
 
 ---
 
-## Ação Necessária Antes de Implementar
+## Logout — CONFIRMADO
 
-Antes de qualquer implementação de auth:
+```text
+DashboardShell
+  → POST /api/auth/logout (Next.js BFF)
+  → POST /auth/logout (NestJS)
+  → limpeza local incondicional
+  → /login
+```
 
-1. Confirmar a estratégia com o backend (NestJS).
-2. Definir contratos: endpoint de login, formato do token, estrutura de sessão.
-3. Definir o tipo de autenticação (JWT stateless vs session).
-4. Criar types/auth.ts com as interfaces reais.
-5. Implementar middleware.ts para proteção das rotas.
-6. Adicionar Context ou estado de sessão antes de construir os componentes.
+- O browser chama apenas o BFF e não acessa `access_token` ou `refresh_token`.
+- O BFF lê ambos os tokens dos cookies HttpOnly.
+- `withAuthRoute` renova o access expirado e repete a revogação uma única vez.
+- Falhas de rede ou indisponibilidade do backend não impedem a limpeza local.
+- São removidos `access_token`, `refresh_token`, `challenge_token`, `mfa_token`
+  e `entities_hint`, incluindo refresh tokens legados nos paths `/api` e
+  `/api/auth`.
+- A interface bloqueia cliques repetidos enquanto o logout está em andamento.
+
+**A CONFIRMAR:** O backend ainda precisa garantir que seu fluxo de refresh
+respeite tokens já revogados. Essa garantia não pertence ao frontend.

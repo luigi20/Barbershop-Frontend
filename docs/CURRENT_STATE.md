@@ -112,7 +112,7 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 
 ---
 
-## Autenticação — PARCIALMENTE IMPLEMENTADO
+## Autenticação — CONFIRMADO: IMPLEMENTADA
 
 ### Fundação HTTP (CONFIRMADO: implementada)
 
@@ -130,24 +130,38 @@ Funcionam com dados mockados em memória. Sem integração com API real.
 
 - `login_token` armazenado em cookie `HttpOnly, SameSite=Lax, MaxAge=300, Path=/api/auth`
 - O browser **nunca** recebe o `login_token` — apenas `requires_entity_selection` e `entities`
-- `access_token` e `refresh_token` — pendentes (select-entity não implementado)
+- `access_token` e `refresh_token` armazenados em cookies HttpOnly com path `/`
 
-### O que ainda não existe (próximas etapas)
+### O que ainda não existe
 
-| Item                                   | Status    |
-| -------------------------------------- | --------- |
-| `/select-entity` page + Route Handler  | PLANEJADO |
-| MFA page + Route Handler               | PLANEJADO |
-| `middleware.ts` para proteção de rotas | PLANEJADO |
-| Logout                                 | PLANEJADO |
+| Item                     | Status    |
+| ------------------------ | --------- |
+| MFA page + Route Handler | PLANEJADO |
+| RBAC                     | PLANEJADO |
 
 ### Integração de Profile e Refresh Automático — CONFIRMADO
 
 - `GET /api/auth/me` — BFF Route Handler que obtém os dados do backend. Envolto no `withAuthRoute`.
 - Centralização do Refresh: `withAuthRoute` intercepta o erro 401, renova o token acessando `/auth/refreshtoken`, atualiza o cookie `access_token` e repete a chamada uma única vez. Tokens nunca chegam ao browser.
-- O `refresh_token` está disponível com `path: "/api"`.
+- O `refresh_token` está disponível com `path: "/"`.
 - Hook `useCurrentUser` — Reativo para estado global de profile nos Client Components.
 - `DashboardShell` utiliza a foto, o nome e a role do usuário.
+
+### Logout — CONFIRMADO
+
+- `POST /api/auth/logout` lê os cookies HttpOnly e tenta revogar a sessão em
+  `POST /auth/logout` no backend.
+- O fluxo reutiliza `withAuthRoute`, incluindo refresh automático quando o
+  `access_token` estiver expirado.
+- A limpeza local ocorre mesmo se o backend estiver indisponível.
+- São removidos os cookies `access_token`, `refresh_token`, `challenge_token`,
+  `mfa_token` e `entities_hint`.
+- Versões legadas de `refresh_token` nos paths `/api` e `/api/auth` também são
+  removidas.
+- A ação “Sair” está disponível na sidebar e no drawer móvel, com loading e
+  bloqueio de clique duplicado, seguida de redirecionamento para `/login`.
+- **A CONFIRMAR:** o backend ainda deve garantir que tokens revogados sejam
+  rejeitados pelo serviço de refresh.
 
 ---
 

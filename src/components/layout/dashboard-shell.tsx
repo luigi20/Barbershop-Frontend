@@ -4,6 +4,8 @@ import {
   Bell,
   CalendarDays,
   LayoutDashboard,
+  LoaderCircle,
+  LogOut,
   Menu,
   MoreHorizontal,
   Scissors,
@@ -16,6 +18,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { logout } from "@/services/auth.client";
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -55,6 +58,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   function isActive(href: string) {
     if (href === "/dashboard") {
@@ -72,6 +77,26 @@ export function DashboardShell({ children }: DashboardShellProps) {
       router.replace("/login");
     }
   }, [user.status, router]);
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    setLogoutError(null);
+
+    try {
+      await logout();
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível encerrar a sessão.",
+      );
+      setIsLoggingOut(false);
+    }
+  }
 
   function getInitials(name?: string) {
     if (!name) return "US";
@@ -159,6 +184,26 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <Settings size={19} />
             Configurações
           </Link>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="mt-1 flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-[var(--muted)] transition hover:bg-[var(--surface-secondary)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoggingOut ? (
+              <LoaderCircle size={19} className="animate-spin" />
+            ) : (
+              <LogOut size={19} />
+            )}
+            {isLoggingOut ? "Saindo..." : "Sair"}
+          </button>
+
+          {logoutError && (
+            <p className="mt-2 px-3 text-xs text-[var(--danger)]" role="alert">
+              {logoutError}
+            </p>
+          )}
 
           <div className="mt-4 border-t border-[var(--border-soft)] pt-4">
             <button className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[var(--surface-secondary)]">
@@ -253,6 +298,26 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 <Settings size={20} />
                 Configurações
               </Link>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex h-12 w-full items-center gap-3 rounded-xl px-4 text-sm text-[var(--muted)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoggingOut ? (
+                  <LoaderCircle size={20} className="animate-spin" />
+                ) : (
+                  <LogOut size={20} />
+                )}
+                {isLoggingOut ? "Saindo..." : "Sair"}
+              </button>
+
+              {logoutError && (
+                <p className="px-4 text-xs text-[var(--danger)]" role="alert">
+                  {logoutError}
+                </p>
+              )}
             </nav>
           </aside>
         </div>

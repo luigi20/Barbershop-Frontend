@@ -7,9 +7,9 @@
 
 ## Status Atual
 
-**CONFIRMADO: Não existe comunicação HTTP real.**
-
-O frontend não faz nenhuma requisição de rede. Todos os dados são provenientes de mocks estáticos importados diretamente nos componentes.
+**CONFIRMADO:** A autenticação utiliza Route Handlers do Next.js como BFF para
+comunicação server-side com o backend NestJS. Os módulos de negócio continuam
+usando mocks estáticos.
 
 ---
 
@@ -221,6 +221,39 @@ Retorna o objeto `MeProfile`.
   "updated_at": "ISO date string"
 }
 ```
+
+---
+
+## Endpoints de Logout
+
+### POST /api/auth/logout (BFF)
+
+**CONFIRMADO** — Encerra a sessão local e tenta revogar o refresh token no
+backend. O browser não envia nem recebe tokens.
+
+**Response:** `200 OK`
+
+O Route Handler sempre remove os cookies locais de autenticação, mesmo quando
+a revogação remota falha por indisponibilidade do backend.
+
+### POST /auth/logout (Backend)
+
+**CONFIRMADO** — Revoga o refresh token persistido.
+
+**Authorization:** `Bearer <access_token>`
+
+**Request body:**
+
+```json
+{
+  "refresh_token": "string"
+}
+```
+
+**Response:** `200 OK`
+
+**A CONFIRMAR:** O `RefreshTokenService` do backend ainda precisa garantir que
+tokens revogados não sejam aceitos. O frontend não compensa esse comportamento.
 
 ---
 

@@ -101,3 +101,24 @@ export async function selectEntity(
 
   return response.json() as Promise<SelectEntityClientResponse>;
 }
+
+/**
+ * Ends the session through the BFF. Tokens remain in HttpOnly cookies and are
+ * never read or sent by browser JavaScript.
+ */
+export async function logout(): Promise<void> {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    let message = "Não foi possível encerrar a sessão. Tente novamente.";
+    try {
+      const errorBody = (await response.json()) as ApiErrorResponse;
+      if (errorBody?.message) message = errorBody.message;
+    } catch {
+      // response body is not JSON - use default message
+    }
+    throw new AuthClientError(message, response.status);
+  }
+}
