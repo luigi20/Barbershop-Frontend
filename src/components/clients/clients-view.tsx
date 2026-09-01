@@ -1,188 +1,99 @@
 "use client";
 
-import {
-  AnimatePresence,
-  LayoutGroup,
-  motion,
-  MotionConfig,
-} from "motion/react";
-import { Plus, Search, UsersRound } from "lucide-react";
+import { AlertCircle, Phone, Search, UsersRound } from "lucide-react";
+import { motion, MotionConfig } from "motion/react";
 import { useMemo, useState } from "react";
 
-import { initialCustomers } from "@/data/mocks/customers";
-import { Customer, CustomerStatus } from "@/types/customer";
-import { ClientCard } from "@/components/clients/client-card";
-import { ClientFormModal } from "@/components/clients/client-form-modal";
-import { ClientDetailDrawer } from "@/components/clients/client-detail-drawer";
+import { useCustomers } from "@/hooks/use-customers";
+import type { EntityCustomer } from "@/types/entity-customer";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
-type CustomerFilter = "all" | CustomerStatus;
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+function formatDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Data não informada"
+    : new Intl.DateTimeFormat("pt-BR").format(date);
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
 
-function StatCard({
-  title,
-  value,
-  description,
-}: {
-  title: string;
-  value: string;
-  description: string;
-}) {
+function CustomerCard({ customer }: { customer: EntityCustomer }) {
   return (
     <motion.article
+      layout
       whileHover={{ y: -2 }}
-      className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-5"
+      className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-5"
     >
-      <p className="text-xs text-[var(--muted)]">{title}</p>
-      <p className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] text-[var(--muted-foreground)] sm:text-xs">
-        {description}
-      </p>
+      <div className="flex items-start gap-3">
+        <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--primary-soft)] text-sm font-semibold text-[var(--primary)]">
+          {customer.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={customer.photo}
+              alt=""
+              className="size-full object-cover"
+            />
+          ) : (
+            getInitials(customer.profile_name)
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="truncate text-sm font-semibold">
+              {customer.profile_name}
+            </h2>
+            <span className="shrink-0 rounded-full border border-[var(--border)] px-2 py-1 text-[10px] text-[var(--muted)]">
+              {customer.status}
+            </span>
+          </div>
+          <p className="mt-1 truncate text-xs text-[var(--muted)]">
+            {customer.entity_name}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2 border-t border-[var(--border-soft)] pt-4 text-xs text-[var(--muted)]">
+        <p className="flex items-center gap-2">
+          <Phone size={14} />
+          {customer.phone ?? "Telefone não informado"}
+        </p>
+        {customer.notes && (
+          <p className="line-clamp-2 text-[var(--muted-foreground)]">
+            {customer.notes}
+          </p>
+        )}
+        <p className="text-[10px] text-[var(--muted-foreground)]">
+          Cliente desde {formatDate(customer.created_at)}
+        </p>
+      </div>
     </motion.article>
   );
 }
 
-function FilterButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      whileTap={{ scale: 0.96 }}
-      className={`relative h-11 min-w-[86px] overflow-hidden rounded-xl border px-4 text-xs font-medium transition-colors ${
-        active
-          ? "border-[var(--primary)] text-[var(--primary)]"
-          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
-      }`}
-    >
-      {active && (
-        <motion.span
-          layoutId="client-filter-active"
-          className="absolute inset-0 bg-[var(--primary-soft)]"
-          transition={{ type: "spring", stiffness: 420, damping: 34 }}
-        />
-      )}
-      <span className="relative z-10">{children}</span>
-    </motion.button>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export function ClientsView() {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const { status, customers, error } = useCustomers();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<CustomerFilter>("all");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
-
-  // ── Derived state ──────────────────────────────────────────────────────────
 
   const filteredCustomers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const term = search.trim().toLowerCase();
+    if (!term) return customers;
 
-    return customers.filter((customer) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        customer.name.toLowerCase().includes(normalizedSearch) ||
-        customer.phone.includes(normalizedSearch);
-
-      const matchesFilter = filter === "all" || customer.status === filter;
-
-      return matchesSearch && matchesFilter;
-    });
-  }, [customers, search, filter]);
-
-  const stats = useMemo(() => {
-    const active = customers.filter((c) => c.status === "active");
-    const totalSpent = customers.reduce((acc, c) => acc + c.totalSpent, 0);
-    const totalAppointments = customers.reduce(
-      (acc, c) => acc + c.totalAppointments,
-      0,
+    return customers.filter((customer) =>
+      [customer.profile_name, customer.phone, customer.notes, customer.status]
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLowerCase().includes(term)),
     );
-    return {
-      total: customers.length,
-      active: active.length,
-      totalSpent,
-      totalAppointments,
-    };
-  }, [customers]);
-
-  // ── Handlers ───────────────────────────────────────────────────────────────
-
-  function openCreateModal() {
-    setEditingCustomer(null);
-    setModalOpen(true);
-  }
-
-  function openEditModal(customer: Customer) {
-    setDetailCustomer(null);
-    setEditingCustomer(customer);
-    setModalOpen(true);
-  }
-
-  function closeModal() {
-    setModalOpen(false);
-    window.setTimeout(() => setEditingCustomer(null), 200);
-  }
-
-  function openDetail(customer: Customer) {
-    setDetailCustomer(customer);
-  }
-
-  function closeDetail() {
-    setDetailCustomer(null);
-  }
-
-  function handleFormSubmit(
-    data: Omit<
-      Customer,
-      "id" | "createdAt" | "totalAppointments" | "totalSpent"
-    >,
-  ) {
-    if (editingCustomer) {
-      setCustomers((current) =>
-        current.map((c) =>
-          c.id === editingCustomer.id ? { ...c, ...data } : c,
-        ),
-      );
-      // Sync detail drawer if this customer is open
-      setDetailCustomer((current) =>
-        current?.id === editingCustomer.id ? { ...current, ...data } : current,
-      );
-    } else {
-      const newCustomer: Customer = {
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString().split("T")[0],
-        totalAppointments: 0,
-        totalSpent: 0,
-        ...data,
-      };
-      setCustomers((current) => [newCustomer, ...current]);
-    }
-    closeModal();
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  }, [customers, search]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -191,164 +102,94 @@ export function ClientsView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: smoothEase }}
       >
-        {/* HEADER */}
-        <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--primary)]">
-              Cadastro
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Clientes
-            </h1>
-            <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
-              Gerencie os dados e o histórico dos seus clientes.
-            </p>
-          </div>
-
-          <motion.button
-            onClick={openCreateModal}
-            whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            className="hidden h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-black sm:flex"
-          >
-            <Plus size={18} />
-            Novo cliente
-          </motion.button>
+        <section>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--primary)]">
+            Cadastro
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Clientes
+          </h1>
+          <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
+            Consulte os clientes vinculados ao ambiente atual.
+          </p>
+          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+            Cadastro e edição estão indisponíveis até a escrita multi-tenant ser
+            corrigida no backend.
+          </p>
         </section>
 
-        {/* STATS */}
-        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard
-            title="Clientes"
-            value={String(stats.total)}
-            description="Cadastrados"
-          />
-          <StatCard
-            title="Ativos"
-            value={String(stats.active)}
-            description="Em atendimento"
-          />
-          <StatCard
-            title="Agendamentos"
-            value={String(stats.totalAppointments)}
-            description="Total histórico"
-          />
-          <StatCard
-            title="Total gerado"
-            value={formatCurrency(stats.totalSpent)}
-            description="Receita acumulada"
-          />
+        <section className="mt-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-5">
+          <p className="text-xs text-[var(--muted)]">Clientes encontrados</p>
+          <p className="mt-2 text-2xl font-semibold tracking-tight">
+            {status === "loading" ? "—" : customers.length}
+          </p>
         </section>
 
-        {/* SEARCH + FILTER */}
         <section className="mt-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-md">
-              <Search
-                size={17}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-              />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome ou telefone..."
-                className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#555] focus:border-[var(--primary)]"
-              />
+          <div className="relative w-full lg:max-w-md">
+            <Search
+              size={17}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar por nome, telefone, observação ou status..."
+              className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#555] focus:border-[var(--primary)]"
+            />
+          </div>
+        </section>
+
+        <section className="mt-5" aria-live="polite">
+          {status === "loading" && (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((item) => (
+                <div
+                  key={item}
+                  className="h-44 animate-pulse rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)]"
+                />
+              ))}
             </div>
+          )}
 
-            <LayoutGroup id="client-filter">
-              <div className="flex w-full gap-2 overflow-x-auto lg:w-auto">
-                <FilterButton
-                  active={filter === "all"}
-                  onClick={() => setFilter("all")}
-                >
-                  Todos
-                </FilterButton>
-                <FilterButton
-                  active={filter === "active"}
-                  onClick={() => setFilter("active")}
-                >
-                  Ativos
-                </FilterButton>
-                <FilterButton
-                  active={filter === "inactive"}
-                  onClick={() => setFilter("inactive")}
-                >
-                  Inativos
-                </FilterButton>
+          {status === "error" && (
+            <div className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-6 py-12 text-center">
+              <AlertCircle className="mx-auto text-[var(--danger)]" size={24} />
+              <h2 className="mt-3 text-sm font-semibold">
+                Não foi possível carregar os clientes
+              </h2>
+              <p className="mt-1 text-xs text-[var(--muted)]">{error}</p>
+            </div>
+          )}
+
+          {status === "success" && filteredCustomers.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                <UsersRound size={21} />
               </div>
-            </LayoutGroup>
-          </div>
-        </section>
+              <h2 className="mt-4 text-sm font-semibold">
+                Nenhum cliente encontrado
+              </h2>
+              <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--muted)]">
+                {customers.length === 0
+                  ? "Ainda não há clientes vinculados a este ambiente."
+                  : "Tente alterar o termo da busca."}
+              </p>
+            </div>
+          )}
 
-        {/* LIST */}
-        <section className="mt-5">
-          <AnimatePresence mode="popLayout">
-            {filteredCustomers.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center"
-              >
-                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
-                  <UsersRound size={21} />
-                </div>
-                <h2 className="mt-4 text-sm font-semibold">
-                  Nenhum cliente encontrado
-                </h2>
-                <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--muted)]">
-                  Tente alterar os filtros ou cadastrar um novo cliente.
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                layout
-                className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
-              >
-                <AnimatePresence mode="popLayout">
-                  {filteredCustomers.map((customer, index) => (
-                    <ClientCard
-                      key={customer.id}
-                      customer={customer}
-                      index={index}
-                      onEdit={() => openEditModal(customer)}
-                      onViewDetails={() => openDetail(customer)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {status === "success" && filteredCustomers.length > 0 && (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {filteredCustomers.map((customer, index) => (
+                <CustomerCard
+                  key={`${customer.profile_name}-${customer.created_at}-${index}`}
+                  customer={customer}
+                />
+              ))}
+            </div>
+          )}
         </section>
-
-        {/* FAB MOBILE */}
-        <motion.button
-          onClick={openCreateModal}
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileTap={{ scale: 0.9 }}
-          className="fixed bottom-24 right-5 z-30 flex size-14 items-center justify-center rounded-2xl bg-[var(--primary)] text-black shadow-xl shadow-black/30 sm:hidden"
-          aria-label="Novo cliente"
-        >
-          <Plus size={24} />
-        </motion.button>
       </motion.div>
-
-      {/* MODALS / DRAWERS */}
-      <ClientFormModal
-        open={modalOpen}
-        editingCustomer={editingCustomer}
-        onClose={closeModal}
-        onSubmit={handleFormSubmit}
-      />
-
-      <ClientDetailDrawer
-        customer={detailCustomer}
-        onClose={closeDetail}
-        onEdit={() => detailCustomer && openEditModal(detailCustomer)}
-      />
     </MotionConfig>
   );
 }
