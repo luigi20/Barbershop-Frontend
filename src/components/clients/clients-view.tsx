@@ -162,6 +162,14 @@ export function ClientsView() {
             </div>
           )}
 
+          {status === "forbidden" && (
+            <div className="rounded-2xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-6 py-12 text-center">
+              <AlertCircle className="mx-auto text-[var(--danger)]" size={24} />
+              <h2 className="mt-3 text-sm font-semibold">Acesso negado</h2>
+              <p className="mt-1 text-xs text-[var(--muted)]">{error}</p>
+            </div>
+          )}
+
           {status === "success" && filteredCustomers.length === 0 && (
             <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-16 text-center">
               <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">

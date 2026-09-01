@@ -77,18 +77,6 @@ export interface SignUpFormValues {
 
 // ─── Select Entity types ──────────────────────────────────────────────────────
 
-/** What the browser sends to POST /api/auth/select-entity (BFF). */
-export interface SelectEntityClientRequest {
-  entity_id: string;
-}
-
-/** What the BFF sends to POST /auth/select-entity (NestJS backend). */
-export interface SelectEntityBackendRequest {
-  /** The challenge token, read from the HttpOnly cookie by the BFF. */
-  login_token: string;
-  entity_id: string;
-}
-
 /** Backend response when MFA is required. */
 export interface SelectEntityMfaResponse {
   mfa_required: true;

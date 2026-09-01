@@ -1,0 +1,33 @@
+CORREÇÕES REALIZADAS
+
+- 401: redireciona diretamente com router.replace("/login") e
+  router.refresh().
+- 403: exibe estado específico de acesso negado, sem logout ou refresh
+  adicional.
+- Outros erros, loading, empty state e busca foram preservados.
+- Classificações documentais corrigidas conforme solicitado.
+- SelectEntityClientRequest e SelectEntityBackendRequest removidos após
+  confirmação de ausência de consumidores.
+- Nenhum token foi exposto e nenhum fluxo de autenticação foi alterado.
+
+ARQUIVOS ALTERADOS
+
+- src/hooks/use-customers.ts
+- src/components/clients/clients-view.tsx
+- src/types/auth.ts
+- docs/ARCHITECTURE.md
+- docs/CURRENT_STATE.md
+- docs/API.md
+
+VALIDAÇÕES
+
+- npm run lint: passou, com 3 warnings preexistentes.
+- npm run lint:prettier:check: passou.
+- npm run build: passou.
+- git diff --check: passou.
+- Revisão final do diff concluída.
+- Nenhum commit ou push realizado.
+
+FINDINGS RESTANTES
+
+Nenhum finding restante dentro do escopo solicitado.

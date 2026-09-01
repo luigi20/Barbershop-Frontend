@@ -29,7 +29,7 @@ Browser → Next.js Route Handlers (BFF) → NestJS
 - **CONFIRMADO:** `src/proxy.ts` protege as rotas privadas por presença de cookie de access ou refresh; a validação efetiva continua no BFF/backend.
 - **CONFIRMADO:** `GET /api/auth/me`, `useCurrentUser` e `DashboardShell` exibem o Profile real.
 - **CONFIRMADO:** logout é feito por `POST /api/auth/logout`, com revogação remota best-effort e limpeza local incondicional.
-- **PLANEJADO:** MFA de login depende de contrato HTTP suficiente.
+- **BLOQUEADO:** MFA de login depende de um contrato HTTP inequívoco para concluir o fluxo.
 - **PLANEJADO:** RBAC completo não está implementado; o backend permanece autoridade de autorização.
 
 ## Estrutura de pastas
@@ -52,7 +52,11 @@ src/
 ## Fronteiras de domínio
 
 - **CONFIRMADO:** autenticação e leitura de Profile possuem integração BFF.
-- **CONFIRMADO:** Agenda, Serviços, Financeiro e Dashboard não possuem integração de domínio utilizável e preservam dados mockados/inline.
-- **PLANEJADO:** Clientes e Memberships podem integrar somente leituras isoladas pela Entity da sessão.
+- **CONFIRMADO:** Clientes possui integração read-only isolada pela Entity da sessão através do BFF.
+- **CONFIRMADO:** Dashboard não possui integração de domínio utilizável e preserva dados inline.
+- **BLOQUEADO:** integração real de Agenda depende de backend HTTP utilizável para Appointment/Schedule.
+- **BLOQUEADO:** integração real de Serviços depende de API HTTP utilizável para Service.
+- **BLOQUEADO:** integração real de Financeiro depende de backend HTTP utilizável para Payment/Finance.
+- **PLANEJADO:** Memberships pode integrar leitura isolada pela Entity da sessão.
 - **PLANEJADO:** Plan pode integrar leitura quando houver UI/necessidade real.
 - **BLOQUEADO:** escrita de Customer/Membership, Entity/Address, Subscription, SuperUser e quotas de Plan dependem de correções/contratos do backend.

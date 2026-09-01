@@ -34,6 +34,7 @@
 
 ### `GET /entity_membership/get_all`
 
+- **PLANEJADO:** integração read-only de Equipe/Memberships.
 - **CONFIRMADO:** usa `req.auth.entity_id`; roles backend administrador ou recepcionista.
 - **CONFIRMADO:** retorna `{ entity_name, profile_name, phone, photo, roles, status, created_at, updated_at }[]`.
 - **CONFIRMADO:** não retorna IDs para operações subsequentes.
@@ -41,6 +42,7 @@
 
 ### Plan
 
+- **PLANEJADO:** integração read-only de Plan.
 - **CONFIRMADO:** `GET /plan/get_all` e `GET /plan/get_one/:id` retornam `{ id, name, price, description, max_members, max_appointments, max_customers, active }`.
 - **CONFIRMADO:** get_all inclui planos ativos e inativos; filtro `active === true` pode ser apenas apresentação.
 - **BLOQUEADO:** quotas não são aplicadas e não devem ser simuladas no frontend.

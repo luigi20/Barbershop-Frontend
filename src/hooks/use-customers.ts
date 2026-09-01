@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { getCustomers } from "@/services/customers.client";
+import {
+  CustomersClientError,
+  getCustomers,
+} from "@/services/customers.client";
 import type { EntityCustomer } from "@/types/entity-customer";
 
 type CustomersState =
   | { status: "loading"; customers: EntityCustomer[]; error: null }
   | { status: "success"; customers: EntityCustomer[]; error: null }
+  | { status: "forbidden"; customers: EntityCustomer[]; error: string }
   | { status: "error"; customers: EntityCustomer[]; error: string };
 
 export function useCustomers(): CustomersState {
+  const router = useRouter();
   const [state, setState] = useState<CustomersState>({
     status: "loading",
     customers: [],
@@ -26,6 +32,25 @@ export function useCustomers(): CustomersState {
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
+
+        if (error instanceof CustomersClientError) {
+          if (error.statusCode === 401) {
+            router.replace("/login");
+            router.refresh();
+            return;
+          }
+
+          if (error.statusCode === 403) {
+            setState({
+              status: "forbidden",
+              customers: [],
+              error:
+                "Você não possui permissão para acessar os clientes desta unidade.",
+            });
+            return;
+          }
+        }
+
         setState({
           status: "error",
           customers: [],
@@ -37,7 +62,7 @@ export function useCustomers(): CustomersState {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [router]);
 
   return state;
 }

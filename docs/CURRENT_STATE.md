@@ -32,11 +32,13 @@
 
 ## Roadmap restante real
 
-- **PLANEJADO:** integrar MFA quando houver contrato inequívoco do fluxo de login.
-- **PLANEJADO:** criar `/perfil` editável quando o backend retornar `birth_date` ou oferecer PATCH seguro.
+- **BLOQUEADO:** integrar MFA até existir contrato inequívoco do fluxo de login.
+- **BLOQUEADO:** criar `/perfil` editável até o backend retornar `birth_date` ou oferecer PATCH seguro.
 - **PLANEJADO:** integrar Memberships read-only quando existir tela/navegação aprovada.
 - **PLANEJADO:** integrar Plan read-only quando existir consumidor real no produto.
-- **PLANEJADO:** manter Agenda, Serviços e Financeiro em mocks até surgirem APIs HTTP utilizáveis.
+- **BLOQUEADO:** integração real de Agenda até existir backend HTTP utilizável para Appointment/Schedule.
+- **BLOQUEADO:** integração real de Serviços até existir API HTTP utilizável para Service.
+- **BLOQUEADO:** integração real de Financeiro até existir backend HTTP utilizável para Payment/Finance.
 
 ## Mocks
 

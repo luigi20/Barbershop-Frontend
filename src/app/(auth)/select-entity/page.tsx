@@ -34,7 +34,7 @@ export default async function SelectEntityPage() {
 
   return (
     <div className="flex w-full items-center justify-center p-4">
-      <SelectEntityForm entities={entities} loginToken={challengeToken} />
+      <SelectEntityForm entities={entities} />
     </div>
   );
 }
