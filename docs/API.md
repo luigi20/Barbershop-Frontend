@@ -1,269 +1,53 @@
 # API.md — BarberPro Frontend
 
-> Última atualização: 2026-08-19
-> Baseado em análise direta do código-fonte e contratos confirmados pelo backend.
+> Última atualização: 2026-08-27. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
 
----
+## Regras de integração
 
-## Status Atual
+- **CONFIRMADO:** Browser chama somente Route Handlers Next.js same-origin.
+- **CONFIRMADO:** Route Handlers usam `http.server.ts`; rotas autenticadas reutilizam `withAuthRoute`.
+- **CONFIRMADO:** `API_URL` é server-only. Não existe `NEXT_PUBLIC_API_URL`.
+- **BLOQUEADO:** tokens não podem ser retornados ao browser, enviados em props, query strings ou logs.
 
-**CONFIRMADO:** A autenticação utiliza Route Handlers do Next.js como BFF para
-comunicação server-side com o backend NestJS. Os módulos de negócio continuam
-usando mocks estáticos.
+## Auth e Profile
 
----
+- **CONFIRMADO:** `POST /auth/signup`, `POST /auth/signin`, `POST /auth/select-entity`, `POST /auth/refreshtoken`, `POST /auth/logout` e `GET /me_profile` estão representados na BFF atual.
+- **CONFIRMADO:** `GET /api/auth/me` retorna `{ id, identity_id, name, photo, phone, roles, created_at, updated_at }` sem tokens.
+- **CONFIRMADO:** `PUT /auth/change_profile` exige `{ name, photo_url, birth_date, phone }`.
+- **BLOQUEADO:** `GET /me_profile` e a resposta de change_profile não fornecem `birth_date`; o frontend não pode preservar com segurança esse campo obrigatório em uma edição.
+- **BLOQUEADO:** `POST /auth/refreshtoken` não consulta revogação persistida/`revoked_at`.
 
-## Biblioteca HTTP
+## MFA
 
-**CONFIRMADO: Axios não está instalado.**
+- **CONFIRMADO:** endpoints informados: `POST /auth/generatemfa`, `/auth/validatemfa`, `/auth/mfa/confirm` e `/auth/mfarequest`.
+- **BLOQUEADO:** contratos necessários ao login ainda são insuficientes: email no body, token também no body versus bearer, endpoint/ordem corretos e payload final de sessão não estão definidos de forma inequívoca.
 
-O `package.json` não contém Axios, fetch wrappers, SWR, React Query, ou qualquer biblioteca de requisição HTTP.
+## Leituras multi-tenant utilizáveis
 
-Nenhum arquivo de cliente HTTP base foi encontrado no projeto.
+### `GET /entity_customer/get_all`
 
----
+- **CONFIRMADO:** exposto ao browser somente como `GET /api/customers`; o Route Handler usa `withAuthRoute` e não aceita `entity_id`.
+- **CONFIRMADO:** usa `req.auth.entity_id`; roles backend administrador ou recepcionista.
+- **CONFIRMADO:** retorna `{ entity_name, profile_name, phone, photo, notes, status, created_at, updated_at }[]`.
+- **CONFIRMADO:** não retorna IDs, email, birth_date nem métricas de agenda/receita.
+- **BLOQUEADO:** create/update não devem ser integrados por aceitarem `entity_id` do body sem isolamento confiável.
 
-## Mocks Existentes
+### `GET /entity_membership/get_all`
 
-**CONFIRMADO:** Dados estáticos em `src/data/mocks/`.
+- **CONFIRMADO:** usa `req.auth.entity_id`; roles backend administrador ou recepcionista.
+- **CONFIRMADO:** retorna `{ entity_name, profile_name, phone, photo, roles, status, created_at, updated_at }[]`.
+- **CONFIRMADO:** não retorna IDs para operações subsequentes.
+- **BLOQUEADO:** create/update não devem ser integrados pelo mesmo problema multi-tenant.
 
-| Arquivo                | Conteúdo                                           | Status                                           |
-| ---------------------- | -------------------------------------------------- | ------------------------------------------------ |
-| mocks/agenda.ts        | professionals[], services[], initialAppointments[] | CONFIRMADO — em uso                              |
-| mocks/services.ts      | initialServices[] (5 serviços)                     | CONFIRMADO — em uso                              |
-| mocks/customers.ts     | initialCustomers[] (10 clientes)                   | CONFIRMADO — em uso                              |
-| mocks/dashboard.ts     | dashboardStats, nextAppointments[]                 | CONFIRMADO — criado, não usado pelos componentes |
-| mocks/appoiments.ts    | —                                                  | CONFIRMADO — vazio (0 bytes, typo no nome)       |
-| mocks/professionals.ts | —                                                  | CONFIRMADO — vazio (0 bytes)                     |
+### Plan
 
-### Como os dados chegam aos componentes
+- **CONFIRMADO:** `GET /plan/get_all` e `GET /plan/get_one/:id` retornam `{ id, name, price, description, max_members, max_appointments, max_customers, active }`.
+- **CONFIRMADO:** get_all inclui planos ativos e inativos; filtro `active === true` pode ser apenas apresentação.
+- **BLOQUEADO:** quotas não são aplicadas e não devem ser simuladas no frontend.
 
-```ts
-// Importação direta — CONFIRMADO
-import {
-  initialAppointments,
-  professionals,
-  services,
-} from "@/data/mocks/agenda";
-import { initialServices } from "@/data/mocks/services";
-```
+## APIs não integráveis nesta execução
 
-O `DashboardPage` (`app/(dashboard)/dashboard/page.tsx`) declara seus dados como literais JavaScript inline, sem usar os arquivos de mock.
-
----
-
-## Camada de Serviços
-
-**CONFIRMADO: Não existe.**
-
-| Pasta                        | Status                  |
-| ---------------------------- | ----------------------- |
-| src/services/                | CONFIRMADO: não existe  |
-| HTTP interceptors            | CONFIRMADO: não existe  |
-| Tratamento de erros HTTP     | CONFIRMADO: não existe  |
-| Loading states de rede       | CONFIRMADO: não existe  |
-| Variáveis de ambiente (.env) | CONFIRMADO: não existem |
-
----
-
-## Integração com Backend
-
-### URL Base — CONFIRMADO
-
-```
-http://localhost:3333
-```
-
-- **Sem** prefixo global `/api` ou `/v1`.
-- Backend: NestJS + PostgreSQL (repositório separado).
-
----
-
-## Endpoints Confirmados
-
-### POST /auth/signin
-
-**CONFIRMADO** — Realiza o login inicial do usuário.
-
-**Request body:**
-
-```json
-{
-  "email": "string",
-  "password": "string"
-}
-```
-
-**Response:**
-
-```json
-{
-  "login_token": "string",
-  "requires_entity_selection": true,
-  "entities": [
-    {
-      "id": "string",
-      "entity_name": "string",
-      "roles": ["string"]
-    }
-  ]
-}
-```
-
-> O `login_token` retornado é um **challenge token** (não é o access token final).
-> Deve ser usado como `Bearer` no próximo passo (`/auth/select-entity`).
-
----
-
-### POST /auth/select-entity
-
-**CONFIRMADO** — Seleciona a entidade (barbearia) com a qual o usuário deseja operar.
-
-**Authorization:** `Bearer <challenge-token>` (o `login_token` retornado pelo `/auth/signin`)
-
-**Request body:**
-
-```json
-{
-  "login_token": "string",
-  "entity_id": "UUID"
-}
-```
-
-**Response — caso MFA exigido:**
-
-```json
-{
-  "mfa_required": true,
-  "mfa_token": "string"
-}
-```
-
-**Response — caso sem MFA:**
-
-```json
-{
-  "mfa_required": false,
-  "access_token": "string",
-  "refresh_token": "string"
-}
-```
-
-> ⚠️ **Problema confirmado no backend:** o controller de `/auth/select-entity` executa o service mas **não retorna seu resultado**. A resposta pode chegar sem body. Ver `CURRENT_STATE.md` para detalhes.
-
----
-
-## Itens Ainda A CONFIRMAR
-
-| Item                                          | Status                                                           |
-| --------------------------------------------- | ---------------------------------------------------------------- |
-| Demais endpoints (agenda, clientes, serviços) | A CONFIRMAR                                                      |
-| Formato dos DTOs de domínio                   | A CONFIRMAR                                                      |
-| CORS configurado                              | A CONFIRMAR                                                      |
-| Estratégia de refresh de token                | CONFIRMADO — BFF intercepta 401 e chama POST /auth/refreshtoken. |
-
----
-
-## Endpoints de Autenticação (Refresh)
-
-### POST /auth/refreshtoken (Backend)
-
-**CONFIRMADO** — Utilizado pelo BFF para renovar o `access_token` expirado.
-
-**Authorization:** `Bearer <refresh_token>`
-
-**Request body:**
-
-```json
-{
-  "refresh_token": "string"
-}
-```
-
-**Response:**
-
-```json
-{
-  "access_token": "string"
-}
-```
-
-> ⚠️ O backend atual não rotaciona o `refresh_token`. Ele retorna apenas o novo `access_token`. O BFF substitui o cookie de `access_token` transparente para o cliente. O `refresh_token` é mantido até expirar.
-
----
-
-## Endpoints de Profile
-
-### GET /api/auth/me (BFF)
-
-**CONFIRMADO** — Retorna o profile do usuário logado, lendo o `access_token` do cookie HttpOnly.
-
-**Response:**
-Retorna o objeto `MeProfile`.
-
-### GET /me_profile (Backend)
-
-**CONFIRMADO** — Retorna os dados do perfil do usuário autenticado no backend.
-
-**Authorization:** `Bearer <access_token>`
-
-**Response:**
-
-```json
-{
-  "id": "string",
-  "identity_id": "string",
-  "name": "string",
-  "photo": "string | null",
-  "phone": "string | null",
-  "roles": ["string"],
-  "created_at": "ISO date string",
-  "updated_at": "ISO date string"
-}
-```
-
----
-
-## Endpoints de Logout
-
-### POST /api/auth/logout (BFF)
-
-**CONFIRMADO** — Encerra a sessão local e tenta revogar o refresh token no
-backend. O browser não envia nem recebe tokens.
-
-**Response:** `200 OK`
-
-O Route Handler sempre remove os cookies locais de autenticação, mesmo quando
-a revogação remota falha por indisponibilidade do backend.
-
-### POST /auth/logout (Backend)
-
-**CONFIRMADO** — Revoga o refresh token persistido.
-
-**Authorization:** `Bearer <access_token>`
-
-**Request body:**
-
-```json
-{
-  "refresh_token": "string"
-}
-```
-
-**Response:** `200 OK`
-
-**A CONFIRMAR:** O `RefreshTokenService` do backend ainda precisa garantir que
-tokens revogados não sejam aceitos. O frontend não compensa esse comportamento.
-
----
-
-## Plano de Integração — A CONFIRMAR
-
-Antes de integrar demais módulos:
-
-1. Criar variáveis de ambiente (.env.local, .env.example) com `NEXT_PUBLIC_API_URL=http://localhost:3333`.
-2. Criar cliente HTTP base (Axios instance com interceptors de Authorization).
-3. Criar pasta `src/services/` com os services por domínio.
-4. Substituir mocks pelos services reais progressivamente.
-5. Implementar tratamento de erros e loading states.
-6. Adicionar React Query ou SWR para cache e sincronização (A CONFIRMAR — decisão pendente).
+- **BLOQUEADO:** Entity/Address: leitura por ID não força Entity da sessão, view model não retorna `name`, update depende de SuperUser quebrado e Address tem inconsistência de criação.
+- **BLOQUEADO:** Subscription: IDs/isolamento/status/validação de plano são insuficientes.
+- **BLOQUEADO:** Appointment, Schedule, Payment e Finance não possuem API HTTP utilizável.
+- **BLOQUEADO:** Service não possui camada HTTP utilizável.

@@ -1,114 +1,38 @@
 # AUTH.md — BarberPro Frontend
 
-> Última atualização: 2026-08-19
-> Baseado em análise direta do código-fonte e contratos confirmados pelo backend.
+> Última atualização: 2026-08-27.
 
----
+## Sessão atual
 
-## Status Atual
+- **CONFIRMADO:** fluxo existente: `/cadastro → /login → /select-entity → /dashboard → /login`.
+- **CONFIRMADO:** signup, signin, select-entity, refresh, Profile e logout passam pelo BFF.
+- **CONFIRMADO:** `access_token` e `refresh_token` são cookies HttpOnly com path `/`.
+- **CONFIRMADO:** `challenge_token` e `mfa_token` usam cookie HttpOnly restrito a `/api/auth`.
+- **CONFIRMADO:** `entities_hint` contém apenas a lista de entidades e é lido pelo Server Component de seleção.
+- **CONFIRMADO:** `withAuthRoute` tenta refresh quando access está ausente ou quando o backend retorna 401 e repete a operação uma vez.
+- **CONFIRMADO:** `proxy.ts` apenas verifica presença de cookies; backend/BFF validam a sessão.
 
-**CONFIRMADO:** signup, signin, seleção de entidade, cookies HttpOnly de access e
-refresh, refresh automático, profile autenticado, proteção de rotas privadas e
-logout estão implementados no frontend.
+## Proteção do challenge token
 
-**PLANEJADO:** MFA e autorização por roles não estão implementados.
+- **CONFIRMADO:** `login_token` é armazenado como `challenge_token` HttpOnly pelo BFF de signin e não integra a resposta pública.
+- **CONFIRMADO:** o browser envia somente `entity_id`; o BFF de select-entity lê o challenge cookie e o usa como bearer e no body exigido pelo backend.
 
----
+## Logout
 
-## O Que Existe Hoje
+- **CONFIRMADO:** o browser chama somente `POST /api/auth/logout`.
+- **CONFIRMADO:** o BFF lê access/refresh, tenta `POST /auth/logout` com refresh automático e sempre limpa a sessão local.
+- **CONFIRMADO:** remove `access_token`, `refresh_token`, `challenge_token`, `mfa_token` e `entities_hint`, além de refresh legado em `/api` e `/api/auth`.
+- **CONFIRMADO:** a interface redireciona para `/login` após sucesso e evita cliques duplicados.
+- **BLOQUEADO:** o backend aceita refresh revogado porque não valida persistência/`revoked_at`; a limpeza local não oferece garantia de revogação server-side.
 
-**CONFIRMADO:**
+## MFA
 
-- Páginas de cadastro, login e seleção de entidade.
-- Route Handlers BFF para signup, signin, select-entity, profile e logout.
-- `src/proxy.ts` protegendo as rotas privadas.
-- `withAuthRoute` centralizando refresh automático e retry único.
-- Cookies de sessão HttpOnly, sem exposição de access ou refresh ao browser.
-- Profile real consumido pelo `DashboardShell`.
+- **CONFIRMADO:** select-entity já armazena `mfa_token` em cookie HttpOnly quando recebe `mfa_required: true` e direciona para `/mfa`.
+- **CONFIRMADO:** não existe página nem Route Handler MFA.
+- **BLOQUEADO:** a sequência e os contratos exatos de generate/validate/confirm/request para concluir o login são ambíguos; nenhuma implementação deve inventá-los.
 
----
+## Profile e autorização
 
-## O Que Não Existe
-
-**CONFIRMADO como ausente:**
-
-| Item                    | Status           |
-| ----------------------- | ---------------- |
-| NextAuth / Auth.js      | Não instalado    |
-| Context de autenticação | Não existe       |
-| MFA                     | Não implementado |
-| RBAC                    | Não implementado |
-
----
-
-## Fluxo Atual — CONFIRMADO
-
-```
-/cadastro → /login → /select-entity → /dashboard → /login (logout)
-```
-
----
-
-## Estratégia de Auth — Contratos Confirmados
-
-### Fluxo geral — CONFIRMADO
-
-```
-/login
-  ↓ POST /auth/signin  →  challenge token + lista de entidades
-/select-entity
-  ↓ POST /auth/select-entity  →  mfa_token  (se MFA exigido)
-                               ou  access_token + refresh_token
-/mfa  (se mfa_required: true)
-  ↓ A CONFIRMAR
-/dashboard
-```
-
-### Tipos de token — CONFIRMADO
-
-| Token           | Quando gerado                                                  | Uso                                                              |
-| --------------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `login_token`   | Resposta de `/auth/signin`                                     | Challenge token. Usado como Bearer em `/auth/select-entity`      |
-| `mfa_token`     | Resposta de `/auth/select-entity` quando `mfa_required: true`  | A CONFIRMAR                                                      |
-| `access_token`  | Resposta de `/auth/select-entity` quando `mfa_required: false` | Token de acesso às rotas protegidas. Expira em 1 hora.           |
-| `refresh_token` | Resposta de `/auth/select-entity` quando `mfa_required: false` | Usado pelo BFF para renovar o `access_token`. Expira em 30 dias. |
-
-### Multi-tenant — CONFIRMADO
-
-- O backend retorna uma lista de `entities` no login.
-- Cada entidade tem: `id` (UUID), `entity_name` (string), `roles` (array de strings).
-- O usuário deve selecionar uma entidade antes de obter o `access_token`.
-
-### Armazenamento de tokens — CONFIRMADO
-
-| Item                                           | Status                                                                   |
-| ---------------------------------------------- | ------------------------------------------------------------------------ |
-| Biblioteca de auth (NextAuth, Auth.js, custom) | Custom                                                                   |
-| Armazenamento (cookie httpOnly, localStorage)  | HttpOnly cookie server-side apenas                                       |
-| Estratégia de refresh de token                 | Automático via BFF wrapper (`withAuthRoute`). Retries limitados a 1 vez. |
-| Roles e permissões (uso no frontend)           | A CONFIRMAR                                                              |
-| Integração MFA (endpoint, validação)           | A CONFIRMAR                                                              |
-
----
-
-## Logout — CONFIRMADO
-
-```text
-DashboardShell
-  → POST /api/auth/logout (Next.js BFF)
-  → POST /auth/logout (NestJS)
-  → limpeza local incondicional
-  → /login
-```
-
-- O browser chama apenas o BFF e não acessa `access_token` ou `refresh_token`.
-- O BFF lê ambos os tokens dos cookies HttpOnly.
-- `withAuthRoute` renova o access expirado e repete a revogação uma única vez.
-- Falhas de rede ou indisponibilidade do backend não impedem a limpeza local.
-- São removidos `access_token`, `refresh_token`, `challenge_token`, `mfa_token`
-  e `entities_hint`, incluindo refresh tokens legados nos paths `/api` e
-  `/api/auth`.
-- A interface bloqueia cliques repetidos enquanto o logout está em andamento.
-
-**A CONFIRMAR:** O backend ainda precisa garantir que seu fluxo de refresh
-respeite tokens já revogados. Essa garantia não pertence ao frontend.
+- **CONFIRMADO:** `GET /api/auth/me` alimenta `useCurrentUser` e `DashboardShell`.
+- **BLOQUEADO:** edição completa segura exige `birth_date`, que não é retornado pelo GET nem pela resposta do PUT.
+- **PLANEJADO:** RBAC completo não faz parte deste sprint; o backend continua sendo autoridade.
