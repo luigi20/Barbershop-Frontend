@@ -89,7 +89,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const clientResponse: SignInClientResponse = {
     requires_entity_selection: backendData.requires_entity_selection,
     entities: backendData.entities || [],
-    login_token: backendData.login_token,
   };
 
   // 4. Set login_token as HttpOnly cookie (challenge phase)

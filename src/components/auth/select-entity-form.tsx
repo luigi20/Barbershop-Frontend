@@ -12,13 +12,9 @@ import Link from "next/link";
 
 interface SelectEntityFormProps {
   entities: AuthEntity[];
-  loginToken: string;
 }
 
-export function SelectEntityForm({
-  entities,
-  loginToken,
-}: SelectEntityFormProps) {
+export function SelectEntityForm({ entities }: SelectEntityFormProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -32,7 +28,7 @@ export function SelectEntityForm({
     setIsSubmitting(true);
 
     try {
-      const response = await selectEntity(entityId, loginToken);
+      const response = await selectEntity(entityId);
       if (response.mfa_required) {
         router.push("/mfa");
       } else {

@@ -80,12 +80,11 @@ export async function signUp(data: SignUpFormValues): Promise<void> {
  */
 export async function selectEntity(
   entityId: string,
-  loginToken: string,
 ): Promise<SelectEntityClientResponse> {
   const response = await fetch("/api/auth/select-entity", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entity_id: entityId, login_token: loginToken }),
+    body: JSON.stringify({ entity_id: entityId }),
   });
 
   if (!response.ok) {

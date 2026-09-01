@@ -12,7 +12,6 @@ import type {
 
 const selectEntitySchema = z.object({
   entity_id: z.string().uuid("entity_id deve ser um UUID válido"),
-  login_token: z.string(),
 });
 
 // ─── Cookie names ─────────────────────────────────────────────────────────────
@@ -57,8 +56,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const cookieStore = await cookies();
   const challengeToken = cookieStore.get(CHALLENGE_COOKIE)?.value;
 
-  // We still check for the cookie to ensure a session was initiated,
-  // even though the frontend now explicitly sends the login_token as well.
   if (!challengeToken) {
     return NextResponse.json(
       { message: "Sessão expirada. Faça login novamente." },
@@ -83,17 +80,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ message }, { status: 422 });
   }
 
-  const { entity_id, login_token } = parsed.data;
+  const { entity_id } = parsed.data;
 
   // 3. Call NestJS backend
-  // The backend requires both Authorization header AND login_token in the body.
+  // The backend requires the challenge token as bearer and in the body. Both
+  // values come from the same HttpOnly cookie and never cross browser JavaScript.
   let backendData: SelectEntityBackendResponse;
   try {
     const result = await http.post<SelectEntityBackendResponse>(
       "/auth/select-entity",
       {
-        body: { login_token, entity_id },
-        headers: { Authorization: `Bearer ${login_token}` },
+        body: { login_token: challengeToken, entity_id },
+        headers: { Authorization: `Bearer ${challengeToken}` },
       },
     );
 

@@ -29,7 +29,6 @@ export interface SignInBackendResponse {
 export interface SignInClientResponse {
   requires_entity_selection: boolean;
   entities: AuthEntity[];
-  login_token: string;
 }
 
 // ─── Form types ───────────────────────────────────────────────────────────────
@@ -81,7 +80,6 @@ export interface SignUpFormValues {
 /** What the browser sends to POST /api/auth/select-entity (BFF). */
 export interface SelectEntityClientRequest {
   entity_id: string;
-  login_token: string;
 }
 
 /** What the BFF sends to POST /auth/select-entity (NestJS backend). */
