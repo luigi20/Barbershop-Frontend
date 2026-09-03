@@ -6,6 +6,8 @@
 
 - **CONFIRMADO:** fluxo existente: `/cadastro → /login → /select-entity → /dashboard → /login`.
 - **CONFIRMADO:** signup, signin, select-entity, refresh, Profile e logout passam pelo BFF.
+- **CONFIRMADO:** signup cria conta e empresa com endereço, informa sucesso e redireciona para `/login`; não autentica automaticamente.
+- **CONFIRMADO:** o formulário envia a URL de `photo` informada visivelmente pelo usuário porque o DTO atual exige uma string; não há upload, URL inventada ou valor oculto.
 - **CONFIRMADO:** `access_token` e `refresh_token` são cookies HttpOnly com path `/`.
 - **CONFIRMADO:** `challenge_token` e `mfa_token` usam cookie HttpOnly restrito a `/api/auth`.
 - **CONFIRMADO:** `entities_hint` contém apenas a lista de entidades e é lido pelo Server Component de seleção.
@@ -27,6 +29,7 @@
 
 ## MFA
 
+- **CONFIRMADO:** MFA não faz parte do signup e `mfa_required` inicia como `false`; configuração e confirmação de MFA permanecem fora desta feature.
 - **CONFIRMADO:** select-entity já armazena `mfa_token` em cookie HttpOnly quando recebe `mfa_required: true` e direciona para `/mfa`.
 - **CONFIRMADO:** não existe página nem Route Handler MFA.
 - **BLOQUEADO:** a sequência e os contratos exatos de generate/validate/confirm/request para concluir o login são ambíguos; nenhuma implementação deve inventá-los.

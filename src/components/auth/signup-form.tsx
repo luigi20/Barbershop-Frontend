@@ -9,33 +9,33 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Image as ImageIcon,
   Loader2,
   Lock,
   Mail,
+  MapPin,
   Phone,
-  Scissors,
   User,
 } from "lucide-react";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { cn } from "@/lib/utils";
-import { signUp, AuthClientError } from "@/services/auth.client";
+import { AuthClientError, signUp } from "@/services/auth.client";
 import type { SignUpFormValues } from "@/types/auth";
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
+const requiredText = (message: string) => z.string().min(1, message).trim();
 const signUpSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").trim(),
   email: z
     .string()
     .min(1, "Email obrigatório")
     .email("Formato de email inválido")
     .trim(),
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").trim(),
   password: z
     .string()
     .min(10, "Mínimo 10 caracteres")
@@ -45,43 +45,57 @@ const signUpSchema = z.object({
     .regex(/[0-9]/, "Deve conter número")
     .regex(/[^A-Za-z0-9]/, "Deve conter símbolo")
     .regex(/^\S+$/, "Não pode conter espaços"),
-  birth_date: z
-    .string()
-    .min(1, "Data de nascimento obrigatória")
-    .refine((val) => !isNaN(new Date(val).getTime()), "Data inválida")
-    .refine(
-      (val) => new Date(val) <= new Date(),
-      "Data não pode ser no futuro",
-    ),
-  entity_type: z.enum(["barbearia", "studio"], {
-    error: "Selecione o tipo de estabelecimento",
-  }),
   entity_name: z
     .string()
     .min(2, "Nome deve ter pelo menos 2 caracteres")
     .trim(),
-  phone: z.string().min(1, "Telefone obrigatório").trim(),
-  document: z.string().min(1, "Documento obrigatório").trim(),
+  birth_date: requiredText("Data de nascimento obrigatória")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+    .refine(
+      (value) => !Number.isNaN(Date.parse(`${value}T00:00:00`)),
+      "Data inválida",
+    )
+    .refine(
+      (value) => value <= new Date().toISOString().slice(0, 10),
+      "Data não pode ser no futuro",
+    ),
+  phone: requiredText("Telefone obrigatório"),
+  photo: requiredText("URL da foto obrigatória"),
+  entity_type: z.literal("BARBERSHOP"),
+  document: requiredText("Documento obrigatório"),
+  zip_code: requiredText("CEP obrigatório"),
+  street: requiredText("Rua obrigatória"),
+  number: requiredText("Número obrigatório"),
+  complement: z.string().trim().optional(),
+  neighborhood: requiredText("Bairro obrigatório"),
+  city: requiredText("Cidade obrigatória"),
+  state: requiredText("Estado obrigatório"),
+  country: requiredText("País obrigatório"),
 });
-
-// ─── Password strength checker ────────────────────────────────────────────────
 
 const passwordRules = [
   {
     label: "10 a 100 caracteres",
-    test: (v: string) => v.length >= 10 && v.length <= 100,
+    test: (value: string) => value.length >= 10 && value.length <= 100,
   },
-  { label: "Letra maiúscula", test: (v: string) => /[A-Z]/.test(v) },
-  { label: "Letra minúscula", test: (v: string) => /[a-z]/.test(v) },
-  { label: "Número", test: (v: string) => /[0-9]/.test(v) },
-  { label: "Símbolo", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+  { label: "Letra maiúscula", test: (value: string) => /[A-Z]/.test(value) },
+  { label: "Letra minúscula", test: (value: string) => /[a-z]/.test(value) },
+  { label: "Número", test: (value: string) => /[0-9]/.test(value) },
+  { label: "Símbolo", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
   {
     label: "Sem espaços",
-    test: (v: string) => v.length > 0 && /^\S+$/.test(v),
+    test: (value: string) => value.length > 0 && /^\S+$/.test(value),
   },
 ];
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+interface InputFieldProps {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  error?: string;
+  optional?: boolean;
+  children: React.ReactNode;
+}
 
 function FieldError({ id, message }: { id?: string; message?: string }) {
   return (
@@ -92,7 +106,6 @@ function FieldError({ id, message }: { id?: string; message?: string }) {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.15 }}
           className="mt-1.5 text-xs text-[var(--danger)]"
           role="alert"
         >
@@ -103,25 +116,30 @@ function FieldError({ id, message }: { id?: string; message?: string }) {
   );
 }
 
-interface InputFieldProps {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  error?: string;
-  children: React.ReactNode;
-}
-
-function InputField({ id, label, icon, error, children }: InputFieldProps) {
+function InputField({
+  id,
+  label,
+  icon,
+  error,
+  optional,
+  children,
+}: InputFieldProps) {
   return (
     <div>
       <label
         htmlFor={id}
         className="mb-1.5 block text-sm font-medium text-[var(--foreground)]"
       >
-        {label}
+        {label}{" "}
+        {optional && (
+          <span className="font-normal text-[var(--muted)]">(opcional)</span>
+        )}
       </label>
       <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+        <span
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+          aria-hidden="true"
+        >
           {icon}
         </span>
         {children}
@@ -131,52 +149,28 @@ function InputField({ id, label, icon, error, children }: InputFieldProps) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
-const EASE = [0.22, 1, 0.36, 1] as const;
+const STEP_FIELDS = {
+  1: ["name", "email", "phone", "birth_date", "password", "photo"],
+  2: ["entity_name", "entity_type", "document"],
+} as const satisfies Record<1 | 2, readonly (keyof SignUpFormValues)[]>;
 
 export function SignupForm() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     trigger,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { entity_type: "barbearia" },
+    defaultValues: { entity_type: "BARBERSHOP", country: "BR", complement: "" },
   });
-
-  const passwordValue = watch("password") ?? "";
-  const entityType = watch("entity_type");
-
-  async function goToStep2() {
-    const valid = await trigger(["name", "email", "password", "birth_date"]);
-    if (valid) setStep(2);
-  }
-
-  async function onSubmit(values: SignUpFormValues) {
-    setGlobalError(null);
-    try {
-      await signUp(values);
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 2000);
-    } catch (error) {
-      if (error instanceof AuthClientError) {
-        setGlobalError(error.message);
-      } else {
-        setGlobalError("Ocorreu um erro inesperado. Tente novamente.");
-      }
-    }
-  }
-
+  const passwordValue = useWatch({ control, name: "password" }) ?? "";
   const inputClass = (hasError: boolean) =>
     cn(
       "h-12 w-full rounded-xl border bg-[var(--surface)] pl-11 pr-4 text-sm outline-none transition",
@@ -184,18 +178,38 @@ export function SignupForm() {
       hasError ? "border-[var(--danger)]" : "border-[var(--border)]",
     );
 
-  // ── Success state ──────────────────────────────────────────────────────────
+  async function advance(from: 1 | 2) {
+    setGlobalError(null);
+    if (await trigger([...STEP_FIELDS[from]])) setStep((from + 1) as 2 | 3);
+  }
 
-  if (success) {
+  async function onSubmit(values: SignUpFormValues) {
+    setGlobalError(null);
+    try {
+      await signUp(values);
+      setSuccess(true);
+      window.setTimeout(() => router.push("/login"), 2000);
+    } catch (error) {
+      setGlobalError(
+        error instanceof AuthClientError
+          ? error.message
+          : "Ocorreu um erro inesperado. Tente novamente.",
+      );
+    }
+  }
+
+  if (success)
     return (
       <MotionConfig reducedMotion="user">
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-sm text-center"
+          className="w-full max-w-md text-center"
+          role="status"
+          aria-live="polite"
         >
-          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--success)]/15">
-            <span className="text-2xl text-[var(--success)]">✓</span>
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--success)]/15 text-2xl text-[var(--success)]">
+            ✓
           </div>
           <h2 className="text-xl font-semibold">Cadastro realizado!</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
@@ -204,50 +218,46 @@ export function SignupForm() {
         </motion.div>
       </MotionConfig>
     );
-  }
 
-  // ── Form ───────────────────────────────────────────────────────────────────
-
+  const stepTitle =
+    step === 1
+      ? "Seus dados pessoais"
+      : step === 2
+        ? "Sua empresa"
+        : "Endereço da empresa";
   return (
     <MotionConfig reducedMotion="user">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: EASE }}
-        className="w-full max-w-sm"
+        className="w-full max-w-md"
       >
-        {/* Brand */}
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)]">
-            <span className="text-xl font-bold text-[var(--primary)]">B</span>
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-xl font-bold text-[var(--primary)]">
+            B
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Criar conta</h1>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            {step === 1 ? "Seus dados pessoais" : "Seu estabelecimento"}
-          </p>
+          <p className="mt-1 text-sm text-[var(--muted)]">{stepTitle}</p>
         </div>
-
-        {/* Step indicator */}
-        <div className="mb-6 flex items-center gap-2">
-          {[1, 2].map((n) => (
+        <div
+          className="mb-6 flex items-center gap-2"
+          aria-label={`Etapa ${step} de 3`}
+        >
+          {[1, 2, 3].map((item) => (
             <div
-              key={n}
+              key={item}
               className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors duration-300",
-                n <= step ? "bg-[var(--primary)]" : "bg-[var(--border)]",
+                "h-1.5 flex-1 rounded-full transition-colors",
+                item <= step ? "bg-[var(--primary)]" : "bg-[var(--border)]",
               )}
             />
           ))}
         </div>
-
-        {/* Global error */}
         <AnimatePresence>
           {globalError && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               className="mb-4 rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]"
               role="alert"
               aria-live="assertive"
@@ -256,20 +266,17 @@ export function SignupForm() {
             </motion.div>
           )}
         </AnimatePresence>
-
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <input type="hidden" {...register("entity_type")} />
           <AnimatePresence mode="wait">
-            {/* ── Step 1: Personal data ── */}
             {step === 1 && (
               <motion.div
-                key="step1"
+                key="personal"
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.25, ease: EASE }}
                 className="flex flex-col gap-4"
               >
-                {/* Name */}
                 <InputField
                   id="name"
                   label="Nome completo"
@@ -278,7 +285,6 @@ export function SignupForm() {
                 >
                   <input
                     id="name"
-                    type="text"
                     autoComplete="name"
                     placeholder="Seu nome"
                     aria-invalid={!!errors.name}
@@ -287,8 +293,6 @@ export function SignupForm() {
                     {...register("name")}
                   />
                 </InputField>
-
-                {/* Email */}
                 <InputField
                   id="signup-email"
                   label="Email"
@@ -308,12 +312,48 @@ export function SignupForm() {
                     {...register("email")}
                   />
                 </InputField>
-
-                {/* Password */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    id="phone"
+                    label="Telefone"
+                    icon={<Phone size={16} />}
+                    error={errors.phone?.message}
+                  >
+                    <input
+                      id="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+5579999999999"
+                      aria-invalid={!!errors.phone}
+                      aria-describedby={
+                        errors.phone ? "phone-error" : undefined
+                      }
+                      className={inputClass(!!errors.phone)}
+                      {...register("phone")}
+                    />
+                  </InputField>
+                  <InputField
+                    id="birth_date"
+                    label="Data de nascimento"
+                    icon={<Calendar size={16} />}
+                    error={errors.birth_date?.message}
+                  >
+                    <input
+                      id="birth_date"
+                      type="date"
+                      aria-invalid={!!errors.birth_date}
+                      aria-describedby={
+                        errors.birth_date ? "birth_date-error" : undefined
+                      }
+                      className={inputClass(!!errors.birth_date)}
+                      {...register("birth_date")}
+                    />
+                  </InputField>
+                </div>
                 <div>
                   <label
                     htmlFor="signup-password"
-                    className="mb-1.5 block text-sm font-medium text-[var(--foreground)]"
+                    className="mb-1.5 block text-sm font-medium"
                   >
                     Senha
                   </label>
@@ -337,11 +377,11 @@ export function SignupForm() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword((v) => !v)}
+                      onClick={() => setShowPassword((value) => !value)}
                       aria-label={
                         showPassword ? "Ocultar senha" : "Mostrar senha"
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] transition hover:text-[var(--foreground)]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)]"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -350,145 +390,85 @@ export function SignupForm() {
                     id="signup-password-error"
                     message={errors.password?.message}
                   />
-
-                  {/* Password strength indicators */}
-                  {passwordValue.length > 0 && (
-                    <motion.ul
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
+                  {passwordValue && (
+                    <ul
                       className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1"
                       aria-label="Requisitos de senha"
                     >
                       {passwordRules.map((rule) => {
-                        const ok = rule.test(passwordValue);
+                        const valid = rule.test(passwordValue);
                         return (
                           <li
                             key={rule.label}
                             className={cn(
-                              "flex items-center gap-1.5 text-[11px] transition-colors",
-                              ok
+                              "text-[11px]",
+                              valid
                                 ? "text-[var(--success)]"
                                 : "text-[var(--muted)]",
                             )}
                           >
-                            <span aria-hidden="true">{ok ? "✓" : "·"}</span>
-                            {rule.label}
+                            {valid ? "✓" : "·"} {rule.label}
                           </li>
                         );
                       })}
-                    </motion.ul>
+                    </ul>
                   )}
                 </div>
-
-                {/* Birth date */}
                 <InputField
-                  id="birth_date"
-                  label="Data de nascimento"
-                  icon={<Calendar size={16} />}
-                  error={errors.birth_date?.message}
+                  id="photo"
+                  label="Foto (URL)"
+                  icon={<ImageIcon size={16} />}
+                  error={errors.photo?.message}
                 >
                   <input
-                    id="birth_date"
-                    type="date"
-                    aria-invalid={!!errors.birth_date}
+                    id="photo"
+                    type="url"
+                    autoComplete="url"
+                    placeholder="https://..."
+                    aria-invalid={!!errors.photo}
                     aria-describedby={
-                      errors.birth_date ? "birth_date-error" : undefined
+                      errors.photo ? "photo-error" : "photo-help"
                     }
-                    className={cn(
-                      inputClass(!!errors.birth_date),
-                      "text-[var(--foreground)]",
-                    )}
-                    {...register("birth_date")}
+                    className={inputClass(!!errors.photo)}
+                    {...register("photo")}
                   />
                 </InputField>
-
-                {/* Next button */}
-                <motion.button
-                  type="button"
-                  onClick={goToStep2}
-                  whileHover={{ scale: 1.015 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-semibold text-black"
+                <p
+                  id="photo-help"
+                  className="-mt-2 text-xs text-[var(--muted)]"
                 >
-                  Continuar
-                  <ArrowRight size={16} aria-hidden="true" />
-                </motion.button>
+                  O cadastro atual exige uma URL de foto. Upload não está
+                  disponível nesta etapa.
+                </p>
+                <NextButton onClick={() => advance(1)} />
               </motion.div>
             )}
-
-            {/* ── Step 2: Business data ── */}
             {step === 2 && (
               <motion.div
-                key="step2"
+                key="company"
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.25, ease: EASE }}
+                exit={{ opacity: 0, x: -12 }}
                 className="flex flex-col gap-4"
               >
-                {/* Entity type */}
                 <div>
-                  <p className="mb-2 text-sm font-medium text-[var(--foreground)]">
+                  <span className="mb-1.5 block text-sm font-medium">
                     Tipo de estabelecimento
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(["barbearia", "studio"] as const).map((type) => {
-                      const active = entityType === type;
-                      return (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() =>
-                            setValue("entity_type", type, {
-                              shouldValidate: true,
-                            })
-                          }
-                          className={cn(
-                            "relative flex h-14 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border text-xs font-medium transition",
-                            active
-                              ? "border-[var(--primary)] text-[var(--primary)]"
-                              : "border-[var(--border)] text-[var(--muted)]",
-                          )}
-                        >
-                          {active && (
-                            <motion.span
-                              layoutId="entity-type-bg"
-                              className="absolute inset-0 bg-[var(--primary-soft)]"
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 32,
-                              }}
-                            />
-                          )}
-                          <span className="relative z-10">
-                            {type === "barbearia" ? (
-                              <Scissors size={16} aria-hidden="true" />
-                            ) : (
-                              <Building2 size={16} aria-hidden="true" />
-                            )}
-                          </span>
-                          <span className="relative z-10 capitalize">
-                            {type}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  </span>
+                  <div className="flex h-14 items-center gap-3 rounded-xl border border-[var(--primary)] bg-[var(--primary-soft)] px-4 text-sm font-medium text-[var(--primary)]">
+                    <Building2 size={18} aria-hidden="true" /> Barbearia
                   </div>
-                  <FieldError message={errors.entity_type?.message} />
                 </div>
-
-                {/* Entity name */}
                 <InputField
                   id="entity_name"
-                  label="Nome do estabelecimento"
+                  label="Nome da empresa"
                   icon={<Building2 size={16} />}
                   error={errors.entity_name?.message}
                 >
                   <input
                     id="entity_name"
-                    type="text"
-                    placeholder="Ex: Barbearia do João"
+                    autoComplete="organization"
+                    placeholder="Barbearia do Luís"
                     aria-invalid={!!errors.entity_name}
                     aria-describedby={
                       errors.entity_name ? "entity_name-error" : undefined
@@ -497,37 +477,16 @@ export function SignupForm() {
                     {...register("entity_name")}
                   />
                 </InputField>
-
-                {/* Phone */}
-                <InputField
-                  id="phone"
-                  label="Telefone"
-                  icon={<Phone size={16} />}
-                  error={errors.phone?.message}
-                >
-                  <input
-                    id="phone"
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder="(11) 99999-9999"
-                    aria-invalid={!!errors.phone}
-                    aria-describedby={errors.phone ? "phone-error" : undefined}
-                    className={inputClass(!!errors.phone)}
-                    {...register("phone")}
-                  />
-                </InputField>
-
-                {/* Document */}
                 <InputField
                   id="document"
-                  label="CPF / CNPJ"
+                  label="Documento"
                   icon={<FileText size={16} />}
                   error={errors.document?.message}
                 >
                   <input
                     id="document"
-                    type="text"
-                    placeholder="000.000.000-00"
+                    inputMode="numeric"
+                    placeholder="CPF ou CNPJ"
                     aria-invalid={!!errors.document}
                     aria-describedby={
                       errors.document ? "document-error" : undefined
@@ -536,28 +495,172 @@ export function SignupForm() {
                     {...register("document")}
                   />
                 </InputField>
-
-                {/* Actions */}
-                <div className="mt-2 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--muted)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
-                    aria-label="Voltar"
+                <StepActions onBack={() => setStep(1)}>
+                  <NextButton onClick={() => advance(2)} />
+                </StepActions>
+              </motion.div>
+            )}
+            {step === 3 && (
+              <motion.div
+                key="address"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col gap-4"
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    id="zip_code"
+                    label="CEP"
+                    icon={<MapPin size={16} />}
+                    error={errors.zip_code?.message}
                   >
-                    <ArrowLeft size={18} aria-hidden="true" />
-                  </button>
-
+                    <input
+                      id="zip_code"
+                      autoComplete="postal-code"
+                      placeholder="49000-000"
+                      aria-invalid={!!errors.zip_code}
+                      aria-describedby={
+                        errors.zip_code ? "zip_code-error" : undefined
+                      }
+                      className={inputClass(!!errors.zip_code)}
+                      {...register("zip_code")}
+                    />
+                  </InputField>
+                  <InputField
+                    id="number"
+                    label="Número"
+                    icon={<MapPin size={16} />}
+                    error={errors.number?.message}
+                  >
+                    <input
+                      id="number"
+                      autoComplete="address-line2"
+                      placeholder="123"
+                      aria-invalid={!!errors.number}
+                      aria-describedby={
+                        errors.number ? "number-error" : undefined
+                      }
+                      className={inputClass(!!errors.number)}
+                      {...register("number")}
+                    />
+                  </InputField>
+                </div>
+                <InputField
+                  id="street"
+                  label="Rua"
+                  icon={<MapPin size={16} />}
+                  error={errors.street?.message}
+                >
+                  <input
+                    id="street"
+                    autoComplete="address-line1"
+                    placeholder="Rua João Pessoa"
+                    aria-invalid={!!errors.street}
+                    aria-describedby={
+                      errors.street ? "street-error" : undefined
+                    }
+                    className={inputClass(!!errors.street)}
+                    {...register("street")}
+                  />
+                </InputField>
+                <InputField
+                  id="complement"
+                  label="Complemento"
+                  optional
+                  icon={<MapPin size={16} />}
+                  error={errors.complement?.message}
+                >
+                  <input
+                    id="complement"
+                    placeholder="Sala 2"
+                    className={inputClass(!!errors.complement)}
+                    {...register("complement")}
+                  />
+                </InputField>
+                <InputField
+                  id="neighborhood"
+                  label="Bairro"
+                  icon={<MapPin size={16} />}
+                  error={errors.neighborhood?.message}
+                >
+                  <input
+                    id="neighborhood"
+                    placeholder="Centro"
+                    aria-invalid={!!errors.neighborhood}
+                    aria-describedby={
+                      errors.neighborhood ? "neighborhood-error" : undefined
+                    }
+                    className={inputClass(!!errors.neighborhood)}
+                    {...register("neighborhood")}
+                  />
+                </InputField>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    id="city"
+                    label="Cidade"
+                    icon={<MapPin size={16} />}
+                    error={errors.city?.message}
+                  >
+                    <input
+                      id="city"
+                      autoComplete="address-level2"
+                      placeholder="Aracaju"
+                      aria-invalid={!!errors.city}
+                      aria-describedby={errors.city ? "city-error" : undefined}
+                      className={inputClass(!!errors.city)}
+                      {...register("city")}
+                    />
+                  </InputField>
+                  <InputField
+                    id="state"
+                    label="Estado"
+                    icon={<MapPin size={16} />}
+                    error={errors.state?.message}
+                  >
+                    <input
+                      id="state"
+                      autoComplete="address-level1"
+                      placeholder="SE"
+                      aria-invalid={!!errors.state}
+                      aria-describedby={
+                        errors.state ? "state-error" : undefined
+                      }
+                      className={inputClass(!!errors.state)}
+                      {...register("state")}
+                    />
+                  </InputField>
+                </div>
+                <InputField
+                  id="country"
+                  label="País"
+                  icon={<MapPin size={16} />}
+                  error={errors.country?.message}
+                >
+                  <input
+                    id="country"
+                    autoComplete="country"
+                    aria-invalid={!!errors.country}
+                    aria-describedby={
+                      errors.country ? "country-error" : "country-help"
+                    }
+                    className={inputClass(!!errors.country)}
+                    {...register("country")}
+                  />
+                </InputField>
+                <p
+                  id="country-help"
+                  className="-mt-2 text-xs text-[var(--muted)]"
+                >
+                  Preenchido como BR para o contexto atual e disponível para
+                  edição.
+                </p>
+                <StepActions onBack={() => setStep(2)}>
                   <motion.button
                     type="submit"
                     disabled={isSubmitting}
                     whileHover={isSubmitting ? {} : { scale: 1.015 }}
                     whileTap={isSubmitting ? {} : { scale: 0.97 }}
-                    className={cn(
-                      "flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition",
-                      "bg-[var(--primary)] text-black",
-                      "disabled:cursor-not-allowed disabled:opacity-60",
-                    )}
+                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>
@@ -572,13 +675,11 @@ export function SignupForm() {
                       "Criar conta"
                     )}
                   </motion.button>
-                </div>
+                </StepActions>
               </motion.div>
             )}
           </AnimatePresence>
         </form>
-
-        {/* Link to login */}
         <p className="mt-6 text-center text-sm text-[var(--muted)]">
           Já tem conta?{" "}
           <Link
@@ -590,5 +691,40 @@ export function SignupForm() {
         </p>
       </motion.div>
     </MotionConfig>
+  );
+}
+
+function NextButton({ onClick }: { onClick: () => void }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ scale: 1.015 }}
+      whileTap={{ scale: 0.97 }}
+      className="mt-2 flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-semibold text-black"
+    >
+      Continuar <ArrowRight size={16} aria-hidden="true" />
+    </motion.button>
+  );
+}
+function StepActions({
+  onBack,
+  children,
+}: {
+  onBack: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-2 flex gap-3">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+        aria-label="Voltar"
+      >
+        <ArrowLeft size={18} aria-hidden="true" />
+      </button>
+      {children}
+    </div>
   );
 }

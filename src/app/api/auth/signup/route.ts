@@ -30,15 +30,24 @@ const signUpSchema = z.object({
       (val) => new Date(val) <= new Date(),
       "Data de nascimento não pode ser no futuro",
     ),
-  entity_type: z.enum(["barbearia", "studio"], {
+  phone: z.string().min(1, "Telefone obrigatório").trim(),
+  photo: z.string().min(1, "URL da foto obrigatória").trim(),
+  entity_type: z.literal("BARBERSHOP", {
     error: "Tipo de estabelecimento inválido",
   }),
   entity_name: z
     .string()
     .min(2, "Nome do estabelecimento deve ter pelo menos 2 caracteres")
     .trim(),
-  phone: z.string().min(1, "Telefone obrigatório").trim(),
   document: z.string().min(1, "Documento obrigatório").trim(),
+  zip_code: z.string().min(1, "CEP obrigatório").trim(),
+  street: z.string().min(1, "Rua obrigatória").trim(),
+  number: z.string().min(1, "Número obrigatório").trim(),
+  complement: z.string().trim().optional(),
+  neighborhood: z.string().min(1, "Bairro obrigatório").trim(),
+  city: z.string().min(1, "Cidade obrigatória").trim(),
+  state: z.string().min(1, "Estado obrigatório").trim(),
+  country: z.string().min(1, "País obrigatório").trim(),
 });
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
@@ -63,16 +72,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const data = parsed.data;
 
-  // 2. Build backend payload — photo is optional and omitted when not provided
+  // 2. Build the exact confirmed backend payload
   const backendPayload: SignUpRequest = {
-    name: data.name,
     email: data.email,
+    name: data.name,
     password: data.password,
-    birth_date: data.birth_date,
-    entity_type: data.entity_type,
     entity_name: data.entity_name,
+    birth_date: data.birth_date,
     phone: data.phone,
+    photo: data.photo,
+    entity_type: data.entity_type,
     document: data.document,
+    zip_code: data.zip_code,
+    street: data.street,
+    number: data.number,
+    ...(data.complement ? { complement: data.complement } : {}),
+    neighborhood: data.neighborhood,
+    city: data.city,
+    state: data.state,
+    country: data.country,
   };
 
   // 3. Call NestJS backend
@@ -92,8 +110,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 502 },
         );
       }
+      if (error.statusCode === 400 || error.statusCode === 422) {
+        return NextResponse.json(
+          {
+            message: "Os dados informados são inválidos. Revise o formulário.",
+          },
+          { status: error.statusCode },
+        );
+      }
       return NextResponse.json(
-        { message: error.message },
+        { message: "Não foi possível concluir o cadastro. Tente novamente." },
         { status: error.statusCode },
       );
     }

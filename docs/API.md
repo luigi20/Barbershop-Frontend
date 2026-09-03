@@ -12,6 +12,9 @@
 ## Auth e Profile
 
 - **CONFIRMADO:** `POST /auth/signup`, `POST /auth/signin`, `POST /auth/select-entity`, `POST /auth/refreshtoken`, `POST /auth/logout` e `GET /me_profile` estão representados na BFF atual.
+- **CONFIRMADO:** `POST /auth/signup` recebe `{ email, name, password, entity_name, birth_date, phone, photo, entity_type, document, zip_code, street, number, complement?, neighborhood, city, state, country }`; somente `complement` é opcional e `entity_type` usa `BARBERSHOP` no fluxo atual.
+- **CONFIRMADO:** o backend cria a conta, a empresa e seu endereço e realiza o geocoding server-side; o frontend não envia latitude/longitude nem consulta serviço de CEP.
+- **CONFIRMADO:** a resposta atual de sucesso do backend é a string `"Usuário cadastrado com sucesso"`; o BFF responde ao browser com sucesso normalizado e nenhum login automático é realizado.
 - **CONFIRMADO:** `GET /api/auth/me` retorna `{ id, identity_id, name, photo, phone, roles, created_at, updated_at }` sem tokens.
 - **CONFIRMADO:** `PUT /auth/change_profile` exige `{ name, photo_url, birth_date, phone }`.
 - **BLOQUEADO:** `GET /me_profile` e a resposta de change_profile não fornecem `birth_date`; o frontend não pode preservar com segurança esse campo obrigatório em uma edição.
@@ -19,6 +22,7 @@
 
 ## MFA
 
+- **CONFIRMADO:** MFA não faz parte do signup; a conta é criada com `mfa_required=false` e qualquer configuração de MFA pertence a uma feature separada.
 - **CONFIRMADO:** endpoints informados: `POST /auth/generatemfa`, `/auth/validatemfa`, `/auth/mfa/confirm` e `/auth/mfarequest`.
 - **BLOQUEADO:** contratos necessários ao login ainda são insuficientes: email no body, token também no body versus bearer, endpoint/ordem corretos e payload final de sessão não estão definidos de forma inequívoca.
 

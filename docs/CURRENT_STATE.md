@@ -4,8 +4,11 @@
 
 ## Estado confirmado
 
-- **CONFIRMADO:** branch de trabalho `feat/frontend-integration-roadmap`.
+- **CONFIRMADO:** branch de trabalho `feat/auth-signup-address`.
 - **CONFIRMADO:** signup, signin, seleção de entidade, cookies HttpOnly, refresh automático, `/api/auth/me`, `useCurrentUser`, proteção por `proxy.ts` e logout existem.
+- **CONFIRMADO:** signup usa três etapas e cobre dados pessoais, empresa e endereço conforme o contrato atual de `POST /auth/signup`; o backend realiza o geocoding.
+- **CONFIRMADO:** `photo` é obrigatória no contrato e, sem upload disponível, é coletada como URL visível e obrigatória; nenhum valor é fabricado pelo frontend.
+- **CONFIRMADO:** MFA não faz parte do signup e a criação inicia com `mfa_required=false`.
 - **CONFIRMADO:** `DashboardShell` usa nome, foto e primeira role do Profile real.
 - **CONFIRMADO:** `/clientes` lista dados reais read-only por `GET /api/customers`, com loading, erro, vazio e busca compatível com o contrato.
 - **CONFIRMADO:** não existe rota/tela de perfil editável, equipe/memberships ou planos.

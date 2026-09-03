@@ -24,6 +24,7 @@ Browser → Next.js Route Handlers (BFF) → NestJS
 ## App Router e sessão
 
 - **CONFIRMADO:** `src/app/(auth)` contém cadastro, login e seleção de entidade.
+- **CONFIRMADO:** o cadastro mantém estado local em três etapas e envia o contrato completo, incluindo endereço, somente ao Route Handler `/api/auth/signup`; geocoding permanece no backend.
 - **CONFIRMADO:** `src/app/(dashboard)` aplica `DashboardShell` às páginas privadas.
 - **CONFIRMADO:** a raiz `/` redireciona para `/login`.
 - **CONFIRMADO:** `src/proxy.ts` protege as rotas privadas por presença de cookie de access ou refresh; a validação efetiva continua no BFF/backend.

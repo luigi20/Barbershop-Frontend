@@ -47,33 +47,31 @@ export interface ApiErrorResponse {
 
 // ─── Signup types ─────────────────────────────────────────────────────────────
 
-export type EntityType = "barbearia" | "studio";
+export type EntityType = "BARBERSHOP";
 
 /** Raw request body sent to POST /auth/signup on the NestJS backend. */
 export interface SignUpRequest {
+  email: string;
   name: string;
   password: string;
-  entity_type: EntityType;
   entity_name: string;
-  email: string;
-  phone: string;
-  photo?: string;
-  document: string;
-  /** Expected format: YYYY-MM-DD */
   birth_date: string;
+  phone: string;
+  photo: string;
+  entity_type: EntityType;
+  document: string;
+  zip_code: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  country: string;
 }
 
 /** Form values — mirrors SignUpRequest fields that the user fills in. */
-export interface SignUpFormValues {
-  name: string;
-  email: string;
-  password: string;
-  birth_date: string;
-  entity_type: EntityType;
-  entity_name: string;
-  phone: string;
-  document: string;
-}
+export type SignUpFormValues = SignUpRequest;
 
 // ─── Select Entity types ──────────────────────────────────────────────────────
 
