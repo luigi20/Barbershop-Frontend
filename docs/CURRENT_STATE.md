@@ -1,17 +1,19 @@
 # CURRENT_STATE.md — BarberPro Frontend
 
-> Última atualização: 2026-08-27. O código atual do frontend é a autoridade deste documento.
+> Última atualização: 2026-09-03. O código atual do frontend é a autoridade deste documento.
 
 ## Estado confirmado
 
-- **CONFIRMADO:** branch de trabalho `feat/auth-signup-address`.
+- **CONFIRMADO:** branch de trabalho `feat/profile-management`.
 - **CONFIRMADO:** signup, signin, seleção de entidade, cookies HttpOnly, refresh automático, `/api/auth/me`, `useCurrentUser`, proteção por `proxy.ts` e logout existem.
 - **CONFIRMADO:** signup usa três etapas e cobre dados pessoais, empresa e endereço conforme o contrato atual de `POST /auth/signup`; o backend realiza o geocoding.
 - **CONFIRMADO:** `photo` é obrigatória no contrato e, sem upload disponível, é coletada como URL visível e obrigatória; nenhum valor é fabricado pelo frontend.
 - **CONFIRMADO:** MFA não faz parte do signup e a criação inicia com `mfa_required=false`.
 - **CONFIRMADO:** `DashboardShell` usa nome, foto e primeira role do Profile real.
 - **CONFIRMADO:** `/clientes` lista dados reais read-only por `GET /api/customers`, com loading, erro, vazio e busca compatível com o contrato.
-- **CONFIRMADO:** não existe rota/tela de perfil editável, equipe/memberships ou planos.
+- **CONFIRMADO:** `/perfil` exibe foto, nome, telefone, data de nascimento e roles em modo somente leitura, usando a integração existente de Profile.
+- **BLOQUEADO:** edição de Profile enquanto `ProfileRepository.update` atualizar incorretamente Identity e não persistir Profile de forma confiável.
+- **CONFIRMADO:** não existe tela de equipe/memberships ou planos.
 - **CONFIRMADO:** Agenda e Serviços usam mocks; Dashboard usa dados inline; Financeiro não possui rota implementada.
 - **CONFIRMADO:** `src/services/auth.client.ts`, `src/hooks/use-current-user.ts`, `src/lib/http.server.ts` e `src/lib/auth-route.server.ts` existem.
 
@@ -28,7 +30,8 @@
 
 - **CONFIRMADO:** logout existente foi preservado e validado; limpeza local é incondicional.
 - **BLOQUEADO:** MFA enquanto email/token/body/bearer e resposta final do fluxo de login não estiverem documentados sem ambiguidade.
-- **BLOQUEADO:** edição completa de Profile enquanto `birth_date` obrigatório no PUT não for retornado pelo GET/resposta de alteração.
+- **CONFIRMADO:** `GET /me_profile` retorna `birth_date`, incluindo valor nulo.
+- **BLOQUEADO:** edição de Profile devido à falha de persistência em `ProfileRepository.update`.
 - **CONFIRMADO:** a listagem de Clientes usa `GET /entity_customer/get_all` através do BFF, sem enviar `entity_id` pelo browser.
 - **PLANEJADO:** Memberships apenas se houver UI atual; nenhuma UI foi encontrada na auditoria.
 - **PLANEJADO:** Plan somente se houver área real; nenhuma UI foi encontrada na auditoria.
@@ -36,7 +39,9 @@
 ## Roadmap restante real
 
 - **BLOQUEADO:** integrar MFA até existir contrato inequívoco do fluxo de login.
-- **BLOQUEADO:** criar `/perfil` editável até o backend retornar `birth_date` ou oferecer PATCH seguro.
+- **BLOQUEADO:** tornar `/perfil` editável até `ProfileRepository.update` persistir Profile corretamente, sem atualizar Identity indevidamente.
+- **BLOQUEADO:** Password Reset permanece sem integração nesta branch.
+- **BLOQUEADO:** Google permanece sem integração nesta branch.
 - **PLANEJADO:** integrar Memberships read-only quando existir tela/navegação aprovada.
 - **PLANEJADO:** integrar Plan read-only quando existir consumidor real no produto.
 - **BLOQUEADO:** integração real de Agenda até existir backend HTTP utilizável para Appointment/Schedule.

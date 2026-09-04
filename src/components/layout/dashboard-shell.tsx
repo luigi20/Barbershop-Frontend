@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Scissors,
   Settings,
+  UserRound,
   UsersRound,
   WalletCards,
   X,
@@ -19,6 +20,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { logout } from "@/services/auth.client";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -98,15 +100,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
     }
   }
 
-  function getInitials(name?: string) {
-    if (!name) return "US";
-    const parts = name.trim().split(" ").filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-  }
-
   function formatRole(role?: string) {
     if (!role) return "Usuário";
     return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
@@ -115,7 +108,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const isLoading =
     user.status === "loading" || user.status === "unauthenticated";
   const profile = user.profile;
-  const initials = isLoading ? "" : getInitials(profile?.name);
   const userName = isLoading ? "Carregando..." : profile?.name || "Usuário";
   const userRole = isLoading ? "Aguarde..." : formatRole(profile?.roles?.[0]);
 
@@ -206,20 +198,21 @@ export function DashboardShell({ children }: DashboardShellProps) {
           )}
 
           <div className="mt-4 border-t border-[var(--border-soft)] pt-4">
-            <button className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[var(--surface-secondary)]">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-sm font-semibold text-[var(--primary)]">
-                {isLoading ? (
+            <Link
+              href="/perfil"
+              className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[var(--surface-secondary)]"
+            >
+              {isLoading ? (
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)]">
                   <span className="size-4 animate-pulse rounded-full bg-[var(--primary)] opacity-50" />
-                ) : profile?.photo ? (
-                  <img
-                    src={profile.photo}
-                    alt={userName}
-                    className="size-full rounded-full object-cover"
-                  />
-                ) : (
-                  initials
-                )}
-              </div>
+                </div>
+              ) : (
+                <ProfileAvatar
+                  name={userName}
+                  photo={profile?.photo ?? null}
+                  className="size-9 text-sm"
+                />
+              )}
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{userName}</p>
@@ -229,7 +222,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
               </div>
 
               <MoreHorizontal size={17} className="text-[var(--muted)]" />
-            </button>
+            </Link>
           </div>
         </div>
       </aside>
@@ -289,6 +282,19 @@ export function DashboardShell({ children }: DashboardShellProps) {
                   </Link>
                 );
               })}
+
+              <Link
+                href="/perfil"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex h-12 items-center gap-3 rounded-xl px-4 text-sm ${
+                  isActive("/perfil")
+                    ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                    : "text-[var(--muted)]"
+                }`}
+              >
+                <UserRound size={20} />
+                Meu perfil
+              </Link>
 
               <Link
                 href="/configuracoes"
@@ -357,19 +363,21 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <Menu size={19} />
             </button>
 
-            <div className="ml-2 hidden size-10 items-center justify-center rounded-full bg-[var(--primary-soft)] text-xs font-semibold text-[var(--primary)] sm:flex overflow-hidden">
+            <Link
+              href="/perfil"
+              aria-label="Abrir meu perfil"
+              className="ml-2 hidden size-10 items-center justify-center overflow-hidden rounded-full sm:flex"
+            >
               {isLoading ? (
-                <span className="size-4 animate-pulse rounded-full bg-[var(--primary)] opacity-50" />
-              ) : profile?.photo ? (
-                <img
-                  src={profile.photo}
-                  alt={userName}
-                  className="size-full object-cover"
-                />
+                <span className="size-10 animate-pulse rounded-full bg-[var(--primary-soft)]" />
               ) : (
-                initials
+                <ProfileAvatar
+                  name={userName}
+                  photo={profile?.photo ?? null}
+                  className="size-10 text-xs"
+                />
               )}
-            </div>
+            </Link>
           </div>
         </header>
 

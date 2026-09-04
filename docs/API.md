@@ -1,6 +1,6 @@
 # API.md — BarberPro Frontend
 
-> Última atualização: 2026-08-27. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
+> Última atualização: 2026-09-03. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
 
 ## Regras de integração
 
@@ -15,9 +15,10 @@
 - **CONFIRMADO:** `POST /auth/signup` recebe `{ email, name, password, entity_name, birth_date, phone, photo, entity_type, document, zip_code, street, number, complement?, neighborhood, city, state, country }`; somente `complement` é opcional e `entity_type` usa `BARBERSHOP` no fluxo atual.
 - **CONFIRMADO:** o backend cria a conta, a empresa e seu endereço e realiza o geocoding server-side; o frontend não envia latitude/longitude nem consulta serviço de CEP.
 - **CONFIRMADO:** a resposta atual de sucesso do backend é a string `"Usuário cadastrado com sucesso"`; o BFF responde ao browser com sucesso normalizado e nenhum login automático é realizado.
-- **CONFIRMADO:** `GET /api/auth/me` retorna `{ id, identity_id, name, photo, phone, roles, created_at, updated_at }` sem tokens.
+- **CONFIRMADO:** `GET /api/auth/me` retorna `{ id, identity_id, name, photo, phone, roles, birth_date, created_at, updated_at }` sem tokens; não retorna `email` nem `status`.
 - **CONFIRMADO:** `PUT /auth/change_profile` exige `{ name, photo_url, birth_date, phone }`.
-- **BLOQUEADO:** `GET /me_profile` e a resposta de change_profile não fornecem `birth_date`; o frontend não pode preservar com segurança esse campo obrigatório em uma edição.
+- **BLOQUEADO:** `PUT /auth/change_profile` não deve ser integrado enquanto `ProfileRepository.update` atualizar incorretamente Identity e não executar persistência confiável do Profile.
+- **BLOQUEADO:** `created_at` pode refletir `updated_at` devido a um bug conhecido no backend e não deve sustentar funcionalidade importante.
 - **BLOQUEADO:** `POST /auth/refreshtoken` não consulta revogação persistida/`revoked_at`.
 
 ## MFA

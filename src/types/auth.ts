@@ -106,6 +106,7 @@ export interface MeProfile {
   photo: string | null;
   phone: string | null;
   roles: string[];
+  birth_date: string | null;
   created_at: string;
   updated_at: string;
 }

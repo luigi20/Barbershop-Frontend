@@ -1,6 +1,6 @@
 # AUTH.md — BarberPro Frontend
 
-> Última atualização: 2026-08-27.
+> Última atualização: 2026-09-03.
 
 ## Sessão atual
 
@@ -37,5 +37,12 @@
 ## Profile e autorização
 
 - **CONFIRMADO:** `GET /api/auth/me` alimenta `useCurrentUser` e `DashboardShell`.
-- **BLOQUEADO:** edição completa segura exige `birth_date`, que não é retornado pelo GET nem pela resposta do PUT.
+- **CONFIRMADO:** `/perfil` reutiliza o mesmo estado de `useCurrentUser`, sem uma segunda chamada a `GET /me_profile`, e apresenta `birth_date` somente para leitura.
+- **BLOQUEADO:** edição de Profile depende da correção de `ProfileRepository.update`, que atualmente atualiza Identity incorretamente e não persiste Profile de forma confiável.
 - **PLANEJADO:** RBAC completo não faz parte deste sprint; o backend continua sendo autoridade.
+
+## Integrações de segurança não disponíveis
+
+- **BLOQUEADO:** Password Reset permanece sem integração.
+- **BLOQUEADO:** MFA permanece sem integração.
+- **BLOQUEADO:** Google permanece sem integração.

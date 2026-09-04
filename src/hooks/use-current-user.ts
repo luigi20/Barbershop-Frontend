@@ -1,15 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import type { MeProfile } from "@/types/auth";
 
 type ProfileState =
   | { status: "loading"; profile: null; error: null }
   | { status: "success"; profile: MeProfile; error: null }
   | { status: "unauthenticated"; profile: null; error: null }
+  | { status: "forbidden"; profile: null; error: string }
   | { status: "error"; profile: null; error: string };
 
-export function useCurrentUser() {
+const CurrentUserContext = createContext<ProfileState | null>(null);
+
+export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ProfileState>({
     status: "loading",
     profile: null,
@@ -32,6 +42,15 @@ export function useCurrentUser() {
             status: "unauthenticated",
             profile: null,
             error: null,
+          });
+          return;
+        }
+
+        if (response.status === 403) {
+          setState({
+            status: "forbidden",
+            profile: null,
+            error: "Seu acesso a este perfil não foi autorizado.",
           });
           return;
         }
@@ -68,6 +87,18 @@ export function useCurrentUser() {
 
     return () => controller.abort();
   }, []);
+
+  return createElement(CurrentUserContext.Provider, { value: state }, children);
+}
+
+export function useCurrentUser() {
+  const state = useContext(CurrentUserContext);
+
+  if (!state) {
+    throw new Error(
+      "useCurrentUser deve ser usado dentro de CurrentUserProvider.",
+    );
+  }
 
   return state;
 }

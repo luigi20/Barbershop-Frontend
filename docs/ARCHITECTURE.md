@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — BarberPro Frontend
 
-> Última atualização: 2026-08-27.
+> Última atualização: 2026-09-03.
 
 ## Stack
 
@@ -28,7 +28,7 @@ Browser → Next.js Route Handlers (BFF) → NestJS
 - **CONFIRMADO:** `src/app/(dashboard)` aplica `DashboardShell` às páginas privadas.
 - **CONFIRMADO:** a raiz `/` redireciona para `/login`.
 - **CONFIRMADO:** `src/proxy.ts` protege as rotas privadas por presença de cookie de access ou refresh; a validação efetiva continua no BFF/backend.
-- **CONFIRMADO:** `GET /api/auth/me`, `useCurrentUser` e `DashboardShell` exibem o Profile real.
+- **CONFIRMADO:** `GET /api/auth/me` alimenta uma única instância de `useCurrentUser`, compartilhada pelo layout autenticado entre `DashboardShell` e `/perfil`.
 - **CONFIRMADO:** logout é feito por `POST /api/auth/logout`, com revogação remota best-effort e limpeza local incondicional.
 - **BLOQUEADO:** MFA de login depende de um contrato HTTP inequívoco para concluir o fluxo.
 - **PLANEJADO:** RBAC completo não está implementado; o backend permanece autoridade de autorização.

@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
       photo: backendProfile.photo ?? null,
       phone: backendProfile.phone ?? null,
       roles: backendProfile.roles || [],
+      birth_date: backendProfile.birth_date ?? null,
       created_at: backendProfile.created_at,
       updated_at: backendProfile.updated_at,
     };
