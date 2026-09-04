@@ -11,6 +11,7 @@ import {
 import { motion, MotionConfig } from "motion/react";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatProfileRole } from "@/lib/profile";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
@@ -39,14 +40,6 @@ function formatBirthDate(value: string | null): string {
     month: "long",
     year: "numeric",
   }).format(date);
-}
-
-function formatRole(role: string): string {
-  return role
-    .replaceAll("_", " ")
-    .replaceAll("-", " ")
-    .toLocaleLowerCase("pt-BR")
-    .replace(/(^|\s)\p{L}/gu, (letter) => letter.toLocaleUpperCase("pt-BR"));
 }
 
 function ProfileSkeleton() {
@@ -132,7 +125,7 @@ export function ProfileView() {
                       className="inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/20 bg-[var(--primary-soft)] px-3 py-1.5 text-xs text-[var(--primary)]"
                     >
                       <BadgeCheck size={14} />
-                      {formatRole(role)}
+                      {formatProfileRole(role)}
                     </span>
                   ))
                 ) : (
@@ -161,6 +154,16 @@ export function ProfileView() {
 
             <dl className="mt-6 space-y-5">
               <div className="flex items-start gap-3">
+                <UserRound
+                  size={17}
+                  className="mt-0.5 shrink-0 text-[var(--primary)]"
+                />
+                <div className="min-w-0">
+                  <dt className="text-xs text-[var(--muted)]">Nome</dt>
+                  <dd className="mt-1 break-words text-sm">{profile.name}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
                 <Phone
                   size={17}
                   className="mt-0.5 shrink-0 text-[var(--primary)]"
@@ -183,6 +186,22 @@ export function ProfileView() {
                   </dt>
                   <dd className="mt-1 text-sm capitalize">
                     {formatBirthDate(profile.birth_date)}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <BadgeCheck
+                  size={17}
+                  className="mt-0.5 shrink-0 text-[var(--primary)]"
+                />
+                <div className="min-w-0">
+                  <dt className="text-xs text-[var(--muted)]">
+                    {profile.roles.length === 1 ? "Função" : "Funções"}
+                  </dt>
+                  <dd className="mt-1 break-words text-sm">
+                    {profile.roles.length > 0
+                      ? profile.roles.map(formatProfileRole).join(", ")
+                      : "Não informada"}
                   </dd>
                 </div>
               </div>

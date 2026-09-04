@@ -19,6 +19,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatProfileRole } from "@/lib/profile";
 import { logout } from "@/services/auth.client";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
@@ -100,16 +101,13 @@ export function DashboardShell({ children }: DashboardShellProps) {
     }
   }
 
-  function formatRole(role?: string) {
-    if (!role) return "Usuário";
-    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
-  }
-
   const isLoading =
     user.status === "loading" || user.status === "unauthenticated";
   const profile = user.profile;
   const userName = isLoading ? "Carregando..." : profile?.name || "Usuário";
-  const userRole = isLoading ? "Aguarde..." : formatRole(profile?.roles?.[0]);
+  const userRole = isLoading
+    ? "Aguarde..."
+    : formatProfileRole(profile?.roles?.[0]);
 
   return (
     <div className="min-h-dvh bg-[var(--background)]">
