@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — BarberPro Frontend
 
-> Última atualização: 2026-09-03.
+> Última atualização: 2026-09-04.
 
 ## Stack
 
@@ -54,10 +54,11 @@ src/
 
 - **CONFIRMADO:** autenticação e leitura de Profile possuem integração BFF.
 - **CONFIRMADO:** Clientes possui integração read-only isolada pela Entity da sessão através do BFF.
+- **CONFIRMADO:** Equipe possui integração read-only por `GET /api/members`; o tenant continua derivado da sessão no backend.
 - **CONFIRMADO:** Dashboard não possui integração de domínio utilizável e preserva dados inline.
 - **BLOQUEADO:** integração real de Agenda depende de backend HTTP utilizável para Appointment/Schedule.
 - **BLOQUEADO:** integração real de Serviços depende de API HTTP utilizável para Service.
 - **BLOQUEADO:** integração real de Financeiro depende de backend HTTP utilizável para Payment/Finance.
-- **PLANEJADO:** Memberships pode integrar leitura isolada pela Entity da sessão.
+- **BLOQUEADO:** detalhes e escrita de Memberships não possuem contrato e isolamento seguros para integração.
 - **PLANEJADO:** Plan pode integrar leitura quando houver UI/necessidade real.
 - **BLOQUEADO:** escrita de Customer/Membership, Entity/Address, Subscription, SuperUser e quotas de Plan dependem de correções/contratos do backend.

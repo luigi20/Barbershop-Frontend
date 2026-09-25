@@ -11,6 +11,7 @@ import {
   Scissors,
   Settings,
   UserRound,
+  UserRoundCog,
   UsersRound,
   WalletCards,
   X,
@@ -42,6 +43,11 @@ const navigation = [
     name: "Clientes",
     href: "/clientes",
     icon: UsersRound,
+  },
+  {
+    name: "Equipe",
+    href: "/equipe",
+    icon: UserRoundCog,
   },
   {
     name: "Serviços",

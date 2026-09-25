@@ -1,6 +1,6 @@
 # API.md — BarberPro Frontend
 
-> Última atualização: 2026-09-03. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
+> Última atualização: 2026-09-04. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
 
 ## Regras de integração
 
@@ -39,11 +39,12 @@
 
 ### `GET /entity_membership/get_all`
 
-- **PLANEJADO:** integração read-only de Equipe/Memberships.
+- **CONFIRMADO:** integração read-only de Equipe/Memberships exposta ao browser como `GET /api/members`.
 - **CONFIRMADO:** usa `req.auth.entity_id`; roles backend administrador ou recepcionista.
 - **CONFIRMADO:** retorna `{ entity_name, profile_name, phone, photo, roles, status, created_at, updated_at }[]`.
-- **CONFIRMADO:** não retorna IDs para operações subsequentes.
-- **BLOQUEADO:** create/update não devem ser integrados pelo mesmo problema multi-tenant.
+- **CONFIRMADO:** não retorna `profile_id`, `entity_id`, `membership_id`, email ou birth_date.
+- **BLOQUEADO:** detalhes não possuem identificador de domínio adequado para navegação/operações subsequentes.
+- **BLOQUEADO:** create/update não devem ser integrados por riscos cross-tenant, privilege escalation de roles, repositories de update e contrato incompleto.
 
 ### Plan
 

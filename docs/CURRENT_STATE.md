@@ -1,10 +1,10 @@
 # CURRENT_STATE.md — BarberPro Frontend
 
-> Última atualização: 2026-09-03. O código atual do frontend é a autoridade deste documento.
+> Última atualização: 2026-09-04. O código atual do frontend é a autoridade deste documento.
 
 ## Estado confirmado
 
-- **CONFIRMADO:** branch de trabalho `feat/profile-management`.
+- **CONFIRMADO:** branch de trabalho `feat/members-list`.
 - **CONFIRMADO:** signup, signin, seleção de entidade, cookies HttpOnly, refresh automático, `/api/auth/me`, `useCurrentUser`, proteção por `proxy.ts` e logout existem.
 - **CONFIRMADO:** signup usa três etapas e cobre dados pessoais, empresa e endereço conforme o contrato atual de `POST /auth/signup`; o backend realiza o geocoding.
 - **CONFIRMADO:** `photo` é obrigatória no contrato e, sem upload disponível, é coletada como URL visível e obrigatória; nenhum valor é fabricado pelo frontend.
@@ -13,7 +13,8 @@
 - **CONFIRMADO:** `/clientes` lista dados reais read-only por `GET /api/customers`, com loading, erro, vazio e busca compatível com o contrato.
 - **CONFIRMADO:** `/perfil` exibe foto, nome, telefone, data de nascimento e roles em modo somente leitura, usando a integração existente de Profile.
 - **BLOQUEADO:** edição de Profile enquanto `ProfileRepository.update` atualizar incorretamente Identity e não persistir Profile de forma confiável.
-- **CONFIRMADO:** não existe tela de equipe/memberships ou planos.
+- **CONFIRMADO:** `/equipe` lista Memberships reais em modo read-only por `GET /api/members`, com busca e filtros locais.
+- **CONFIRMADO:** não existe tela de detalhes de membro ou planos.
 - **CONFIRMADO:** Agenda e Serviços usam mocks; Dashboard usa dados inline; Financeiro não possui rota implementada.
 - **CONFIRMADO:** `src/services/auth.client.ts`, `src/hooks/use-current-user.ts`, `src/lib/http.server.ts` e `src/lib/auth-route.server.ts` existem.
 
@@ -33,7 +34,7 @@
 - **CONFIRMADO:** `GET /me_profile` retorna `birth_date`, incluindo valor nulo.
 - **BLOQUEADO:** edição de Profile devido à falha de persistência em `ProfileRepository.update`.
 - **CONFIRMADO:** a listagem de Clientes usa `GET /entity_customer/get_all` através do BFF, sem enviar `entity_id` pelo browser.
-- **PLANEJADO:** Memberships apenas se houver UI atual; nenhuma UI foi encontrada na auditoria.
+- **CONFIRMADO:** listagem de Memberships integrada sem enviar `entity_id` pelo browser.
 - **PLANEJADO:** Plan somente se houver área real; nenhuma UI foi encontrada na auditoria.
 
 ## Roadmap restante real
@@ -42,7 +43,8 @@
 - **BLOQUEADO:** tornar `/perfil` editável até `ProfileRepository.update` persistir Profile corretamente, sem atualizar Identity indevidamente.
 - **BLOQUEADO:** Password Reset permanece sem integração nesta branch.
 - **BLOQUEADO:** Google permanece sem integração nesta branch.
-- **PLANEJADO:** integrar Memberships read-only quando existir tela/navegação aprovada.
+- **BLOQUEADO:** detalhes de Membership enquanto a listagem não retornar `profile_id` ou outro identificador de domínio adequado.
+- **BLOQUEADO:** criação e atualização de Membership por riscos cross-tenant, privilege escalation, repositories de update e contrato incompleto.
 - **PLANEJADO:** integrar Plan read-only quando existir consumidor real no produto.
 - **BLOQUEADO:** integração real de Agenda até existir backend HTTP utilizável para Appointment/Schedule.
 - **BLOQUEADO:** integração real de Serviços até existir API HTTP utilizável para Service.
