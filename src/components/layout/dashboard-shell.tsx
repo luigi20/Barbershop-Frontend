@@ -61,8 +61,6 @@ const navigation = [
   },
 ];
 
-const mobileNavigation = navigation.slice(0, 3);
-
 export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
 
@@ -110,6 +108,23 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const isLoading =
     user.status === "loading" || user.status === "unauthenticated";
   const profile = user.profile;
+  const canViewDashboard = Boolean(
+    profile?.roles.some((role) =>
+      ["administrador", "recepcionista"].includes(role),
+    ),
+  );
+  const canViewAgenda = Boolean(
+    profile?.roles.some((role) =>
+      ["administrador", "recepcionista", "barbeiro"].includes(role),
+    ),
+  );
+  const visibleNavigation = navigation.filter(
+    (item) =>
+      (item.href !== "/dashboard" || canViewDashboard) &&
+      (item.href !== "/agenda" || canViewAgenda),
+  );
+  const mobileNavigation = visibleNavigation.slice(0, 3);
+  const homeHref = canViewDashboard ? "/dashboard" : "/perfil";
   const userName = isLoading ? "Carregando..." : profile?.name || "Usuário";
   const userRole = isLoading
     ? "Aguarde..."
@@ -121,7 +136,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] border-r border-[var(--border-soft)] bg-[#0c0c0c] lg:flex lg:flex-col">
         <div className="flex h-20 items-center px-6">
-          <Link href="/dashboard" className="flex items-center gap-3">
+          <Link href={homeHref} className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--primary)] text-black">
               <Scissors size={20} strokeWidth={2.2} />
             </div>
@@ -145,7 +160,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </p>
 
           <nav className="space-y-1">
-            {navigation.map((item) => {
+            {visibleNavigation.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
 
@@ -263,7 +278,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
             </div>
 
             <nav className="space-y-2">
-              {navigation.map((item) => {
+              {visibleNavigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
 
@@ -388,7 +403,36 @@ export function DashboardShell({ children }: DashboardShellProps) {
         {/* PAGE */}
 
         <main className="mx-auto w-full max-w-[1600px] px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">
-          {children}
+          {pathname === "/dashboard" &&
+          (user.status === "loading" || user.status === "unauthenticated") ? (
+            <div
+              className="h-40 animate-pulse rounded-2xl bg-[var(--surface)]"
+              role="status"
+              aria-label="Carregando Dashboard"
+            />
+          ) : pathname === "/dashboard" &&
+            (user.status === "error" || user.status === "forbidden") ? (
+            <p role="alert" className="text-sm text-[var(--danger)]">
+              {user.error}
+            </p>
+          ) : pathname === "/dashboard" &&
+            user.status === "success" &&
+            !canViewDashboard ? (
+            <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-6">
+              <h1 className="text-xl font-semibold">Dashboard indisponível</h1>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Esta visão está disponível para administração e recepção.
+              </p>
+              <Link
+                href="/perfil"
+                className="mt-4 inline-block text-sm text-[var(--primary)]"
+              >
+                Abrir meu perfil
+              </Link>
+            </section>
+          ) : (
+            children
+          )}
         </main>
       </div>
 

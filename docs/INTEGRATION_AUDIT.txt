@@ -1,0 +1,156 @@
+BARBERPRO - AUDITORIA DE INTEGRACAO FRONTEND/BFF/BACKEND
+Data: 2026-10-02
+Branch: feat/members-list
+Backend local: http://localhost:3333
+Frontend local: http://localhost:3000
+
+ESCOPO E CRITERIO
+
+Auditoria restrita aos contratos reais de Auth, Profile, Entity, Members,
+Customers e Services. Arquitetura preservada: Browser -> Next.js BFF -> NestJS.
+Tokens sensiveis permanecem em cookies HttpOnly e no servidor.
+
+"CONFIRMADO no codigo" significa verificacao dos arquivos atuais.
+"CONFIRMADO nesta rodada" significa chamada HTTP executada nesta auditoria.
+"CONFIRMADO no smoke anterior" significa resultado registrado em
+docs/INTEGRATION_SMOKE.md antes desta rodada.
+"A CONFIRMAR" significa que esta rodada nao teve evidencia suficiente.
+
+AUTH
+
+Compativel:
+- CONFIRMADO no codigo: POST /auth/select-entity recebe o mesmo login_token
+  no Bearer e no body, junto com entity_id. O browser envia somente entity_id.
+- CONFIRMADO no codigo: POST /auth/refreshtoken recebe o mesmo refresh_token
+  no Bearer e no body. O BFF substitui access_token e refresh_token em cookies
+  HttpOnly e repete a requisicao original somente uma vez apos 401.
+- CONFIRMADO no codigo: 403, 404 e 409 nao acionam refresh.
+- CONFIRMADO no codigo: POST /auth/logout recebe access_token no Bearer e
+  refresh_token no body. Os cookies locais sao limpos mesmo se a chamada
+  remota falhar.
+- CONFIRMADO nesta rodada: POST /api/auth/logout sem sessao retornou 200;
+  POST /api/auth/select-entity sem challenge retornou 401.
+- CONFIRMADO no smoke anterior: login, select entity, logout e refresh
+  autenticados tiveram sucesso; os dois cookies foram substituidos no refresh.
+Incompativel: nenhuma divergencia de contrato comprovada nesta rodada.
+
+PROFILE
+
+Compativel:
+- CONFIRMADO no codigo: GET /me_profile inclui email na resposta publica
+  sem expor tokens.
+- CONFIRMADO no codigo: PUT /auth/change_profile aceita apenas name, phone,
+  photo_url e birth_date em update parcial. Email e somente leitura.
+- CONFIRMADO no smoke anterior: GET e PUT autenticados retornaram 200.
+Incompativel: nenhuma comprovada nesta rodada.
+
+ENTITY
+
+Compativel:
+- CONFIRMADO no codigo: GET e PUT usam /entity/current; o BFF nao recebe
+  entity_id do browser para selecionar tenant.
+- CONFIRMADO no smoke anterior: GET e PUT autenticados retornaram 200 e o ID
+  da Entity foi preservado.
+Incompativel: nenhuma comprovada nesta rodada.
+
+MEMBERS
+
+Compativel:
+- CONFIRMADO no codigo: a lista e o detalhe usam profile_id como ID de
+  navegacao. Nenhum membership_id e inventado.
+- CONFIRMADO no codigo: create nao envia entity_id; update envia profile_id
+  da rota e apenas roles/status locais como campos editaveis.
+- CONFIRMADO no smoke anterior: list/detail 200, create 201, deactivate 200
+  e tentativa de duplicidade 409.
+Incompativel: nenhuma comprovada nesta rodada.
+
+CUSTOMERS
+
+Compativel:
+- CONFIRMADO no codigo: lista, detalhe e update usam customer_id; o codigo
+  nao presume que customer_id seja igual a profile_id.
+- CONFIRMADO no codigo: create nao envia entity_id; update envia customer_id
+  da rota e apenas notes/status locais como campos editaveis.
+- CONFIRMADO no smoke anterior: list/detail 200, create 201 e deactivate 200.
+Incompativel: nenhuma comprovada nesta rodada.
+
+SERVICES
+
+Compativel no frontend:
+- CONFIRMADO no codigo: Service usa id, entity_id, name, description, price,
+  duration_minutes, status, created_at e updated_at.
+- CONFIRMADO no codigo: price e string decimal; duration_minutes e inteiro;
+  create nao envia entity_id; deactivate/reactivate usam inativo/ativo.
+- CONFIRMADO no codigo: a tela consulta /api/services e nao usa o mock de
+  Services.
+Incompativel / bloqueio:
+- CONFIRMADO no smoke anterior: list/create/detail retornaram 500 Internal
+  server error. O log do NestJS registrou PrismaClientValidationError:
+  Unknown argument entity_id na consulta de Service, associado a Prisma
+  Client anterior ao schema P2.
+- A CONFIRMAR: o NestJS foi reiniciado depois desse smoke. Sem uma sessao de
+  teste autenticada nesta rodada, nao foi possivel confirmar se o 500 persiste
+  nem validar update/deactivate/reactivate. Nao ha evidencia de que alterar
+  o frontend resolva esse erro do backend.
+
+EXECUCAO DESTA RODADA
+
+- CONFIRMADO nesta rodada: GET /login retornou 200.
+- CONFIRMADO nesta rodada: GET sem sessao em /api/auth/me,
+  /api/entity/current, /api/members, /api/customers, /api/services e detalhes
+  de Members, Customers e Services retornou 401.
+- CONFIRMADO nesta rodada: GET sem Bearer em /me_profile, /entity/current,
+  /entity_membership/get_all, /entity_customer/get_all e /service/get_all
+  no NestJS retornou 401.
+- CONFIRMADO nesta rodada: as rotas /service/get_all, /service/get_one/:id,
+  /service/create e /service/update/:id estao mapeadas no NestJS.
+- A CONFIRMAR nesta rodada: os 19 fluxos autenticados apos o reinicio do
+  backend, refresh em tempo real, isolamento entre tenants e navegacao visual.
+  E necessaria uma conta local de teste ou fixture para repeti-los.
+
+CORRECOES E ARQUIVOS
+
+- Nenhuma correcao de codigo foi feita nesta rodada: nao foi comprovada uma
+  divergencia nova no frontend/BFF.
+- Este arquivo foi criado para registrar a auditoria solicitada. As outras
+  modificacoes presentes na arvore de trabalho ja existiam antes da rodada
+  e foram preservadas.
+
+VALIDACAO
+
+- npm run lint: passou.
+- npm run lint:prettier:check: passou.
+- npm run build: passou, incluindo TypeScript.
+- git diff --check: passou.
+- Nenhum commit ou push foi realizado.
+
+ROTEIRO MANUAL FINAL
+
+Usar uma conta local de teste autorizada, no mesmo tenant, e conferir status,
+resposta e IDs reais no Network. Nao registrar tokens em console ou arquivos.
+
+ 1. Login: signin 200; login_token ausente do JSON do browser.
+ 2. Select Entity: 200; cookies de sessao HttpOnly.
+ 3. Profile GET: /api/auth/me 200, incluindo email.
+ 4. Profile UPDATE: PUT 200; reload confirma dados; email permanece igual.
+ 5. Entity GET: /api/entity/current 200, tenant da sessao.
+ 6. Entity UPDATE: PUT 200; mesmo ID e tenant.
+ 7. Members LIST: GET 200 com profile_id.
+ 8. Members DETAIL: GET por profile_id 200.
+ 9. Members CREATE: POST 201 com profile_id real.
+10. Members UPDATE/deactivate: PUT 200 com roles/status locais.
+11. Customers LIST: GET 200 com customer_id.
+12. Customers DETAIL: GET por customer_id 200.
+13. Customers CREATE: POST 201 com customer_id real.
+14. Customers UPDATE/deactivate: PUT 200 com notes/status locais.
+15. Services LIST: GET 200, incluindo ativos e inativos.
+16. Services CREATE: POST 201 com price "35.00" e duration_minutes 45.
+17. Services UPDATE: PUT 200; ID e Entity preservados.
+18. Services deactivate/reactivate: PUT com status inativo, depois ativo;
+    registro permanece na lista.
+19. Logout: POST 200; cookies locais removidos; /api/auth/me retorna 401.
+
+Refresh automatico: usar access expirado e refresh valido. Confirmar uma
+chamada a /auth/refreshtoken, recebimento de access_token e refresh_token
+novos, substituicao dos dois cookies e somente uma repeticao da requisicao
+original. Repetir cenarios 403, 404 e 409: nenhum deve acionar refresh.

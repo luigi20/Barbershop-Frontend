@@ -1,5 +1,13 @@
 # API.md — BarberPro Frontend
 
+> Atualização M0.4: **CONFIRMADO:** Dashboard P5 integrado em código via `GET /api/dashboard/operations`, `/summary`, `/upcoming?limit=5` e `/timeseries?from=YYYY-MM-DD&to=YYYY-MM-DD`. O client usa contratos P5 com `service_name_snapshot`, `price_snapshot`, receita decimal em string, `date` civil e timezone da resposta. Admin não chama operations; recepcionista não chama summary ou timeseries. **A CONFIRMAR:** respostas e RBAC em runtime com backend P5.
+
+> Atualização M0.3: **CONFIRMADO:** BFF de Appointments expõe `GET/POST /api/appointments`, `GET /api/appointments/availability`, `GET /api/appointments/[id]` e `PUT /api/appointments/[id]/{reschedule,cancel,complete}`. A lista envia `from`/`to` como instantes com offset/Z e limita o intervalo a 31 × 24h. A criação aceita somente `customer_id`, `professional_profile_id`, `service_id`, `starts_at` e `notes?`; reagendamento aceita `starts_at` e `professional_profile_id?`; cancelamento aceita `reason?`; conclusão não envia body. `withAuthRoute` mantém refresh único somente em 401. **A CONFIRMAR:** respostas e autorização em runtime com backend P4. As seções históricas abaixo não descrevem o contrato P4.
+
+> Atualização M0.2: **CONFIRMADO:** o BFF expõe `GET/PUT /api/availability/timezone`, `GET/PUT /api/availability/business-hours`, `GET/PUT /api/availability/professionals/[profileId]/hours`, `GET/POST /api/availability/professionals/[profileId]/blocks` e `PUT/DELETE /api/availability/professionals/[profileId]/blocks/[blockId]`. Usa access token server-side, refresh e um retry somente em 401; 403/404/409 são repassados sem refresh. `profileId` vem de Members; nenhum `entity_id` é enviado pelo browser. Hours usa `{ periods: [{ weekday, start_time, end_time }] }` com PUT de substituição completa. Blocks exige `from` e `to` com offset ou Z. **A CONFIRMAR:** respostas e persistência em runtime contra o backend P3.
+
+> Atualização 2026-10-02: os contratos P0/P1/P2 atuais do BFF estão em [INTEGRATION_SMOKE.md](./INTEGRATION_SMOKE.md). As descrições abaixo são a baseline histórica de 2026-09-04.
+
 > Última atualização: 2026-09-04. Contratos abaixo vêm do código atual ou da baseline de backend fornecida para o sprint.
 
 ## Regras de integração

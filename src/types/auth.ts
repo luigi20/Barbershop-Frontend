@@ -102,6 +102,7 @@ export interface SelectEntityClientResponse {
 export interface MeProfile {
   id: string;
   identity_id: string;
+  email: string | null;
   name: string;
   photo: string | null;
   phone: string | null;

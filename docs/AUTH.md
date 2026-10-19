@@ -1,5 +1,9 @@
 # AUTH.md — BarberPro Frontend
 
+> Atualização M0.1: **CONFIRMADO:** `/select-entity` usa apenas `entities_hint` para apresentar as opções. O cookie `challenge_token` permanece HttpOnly com `Path=/api/auth` e é lido exclusivamente pelo BFF `POST /api/auth/select-entity`, que envia o token ao backend no Bearer e no body. O hint não concede autorização. **A CONFIRMAR:** fluxo completo single e multi-Entity em runtime. **BLOQUEADO:** MFA continua fora desta fase.
+
+> Atualização 2026-10-02: o refresh agora substitui os cookies HttpOnly de access e refresh após rotação; o logout remoto usa o refresh corrente. O estado atual está em [INTEGRATION_SMOKE.md](./INTEGRATION_SMOKE.md). O restante registra a baseline histórica de 2026-09-03.
+
 > Última atualização: 2026-09-03.
 
 ## Sessão atual

@@ -45,17 +45,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // refresh and retries this call once when the backend responds with 401.
   if (refreshToken) {
     try {
-      await withAuthRoute(request, async (_request, accessToken) => {
-        await http.post<void>("/auth/logout", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          body: { refresh_token: refreshToken },
-        });
+      await withAuthRoute(
+        request,
+        async (_request, accessToken, currentRefreshToken) => {
+          await http.post<void>("/auth/logout", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: { refresh_token: currentRefreshToken },
+          });
 
-        return new NextResponse(null, {
-          status: 200,
-          headers: { "Cache-Control": "no-store" },
-        });
-      });
+          return new NextResponse(null, {
+            status: 200,
+            headers: { "Cache-Control": "no-store" },
+          });
+        },
+      );
     } catch {
       // Backend and network failures must not prevent local logout.
     }

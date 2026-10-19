@@ -13,9 +13,9 @@ export default async function SelectEntityPage() {
   const cookieStore = await cookies();
   const entitiesHintCookie = cookieStore.get("entities_hint")?.value;
 
-  // If no entities hint or challenge token is found, redirect back to login
-  const challengeToken = cookieStore.get("challenge_token")?.value;
-  if (!entitiesHintCookie || !challengeToken) {
+  // The challenge cookie is scoped to /api/auth, so this page uses only the
+  // non-sensitive hint for navigation. The BFF validates the challenge on POST.
+  if (!entitiesHintCookie) {
     redirect("/login");
   }
 

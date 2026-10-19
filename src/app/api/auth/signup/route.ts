@@ -95,7 +95,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // 3. Call NestJS backend
   try {
-    await http.post<unknown>("/auth/signup", { body: backendPayload });
+    await http.post<string>("/auth/signup", {
+      body: backendPayload,
+      responseType: "text",
+      timeoutMs: 30_000,
+    });
   } catch (error) {
     if (error instanceof HttpError) {
       if (error.statusCode === 409) {

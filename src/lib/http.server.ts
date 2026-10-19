@@ -54,6 +54,8 @@ interface RequestOptions {
   headers?: Record<string, string>;
   /** Timeout in milliseconds. Defaults to 10 000. */
   timeoutMs?: number;
+  /** For endpoints that return a successful plain-text response. */
+  responseType?: "json" | "text";
 }
 
 async function request<T>(
@@ -61,7 +63,12 @@ async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, headers = {}, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+  const {
+    body,
+    headers = {},
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    responseType = "json",
+  } = options;
   const url = `${getBaseUrl()}${path}`;
 
   const response = await fetch(url, {
@@ -81,6 +88,10 @@ async function request<T>(
     throw new HttpError(response.status, message);
   }
 
+  if (responseType === "text") {
+    return (await response.text()) as T;
+  }
+
   const data = await safeJsonParse<T>(response);
 
   if (data === null) {
@@ -97,4 +108,8 @@ export const http = {
     request<T>("POST", path, options),
   get: <T>(path: string, options?: RequestOptions) =>
     request<T>("GET", path, options),
+  put: <T>(path: string, options?: RequestOptions) =>
+    request<T>("PUT", path, options),
+  delete: <T>(path: string, options?: RequestOptions) =>
+    request<T>("DELETE", path, options),
 };

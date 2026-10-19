@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { useCustomers } from "@/hooks/use-customers";
 import type { EntityCustomer } from "@/types/entity-customer";
+import { CustomerManager } from "@/components/clients/customer-manager";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -81,7 +82,7 @@ function CustomerCard({ customer }: { customer: EntityCustomer }) {
 }
 
 export function ClientsView() {
-  const { status, customers, error } = useCustomers();
+  const { status, customers, error, reload } = useCustomers();
   const [search, setSearch] = useState("");
 
   const filteredCustomers = useMemo(() => {
@@ -112,11 +113,11 @@ export function ClientsView() {
           <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
             Consulte os clientes vinculados ao ambiente atual.
           </p>
-          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-            Cadastro e edição estão indisponíveis até a escrita multi-tenant ser
-            corrigida no backend.
-          </p>
         </section>
+
+        {status === "success" && (
+          <CustomerManager customers={customers} onSaved={reload} />
+        )}
 
         <section className="mt-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-5">
           <p className="text-xs text-[var(--muted)]">Clientes encontrados</p>
@@ -188,11 +189,8 @@ export function ClientsView() {
 
           {status === "success" && filteredCustomers.length > 0 && (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {filteredCustomers.map((customer, index) => (
-                <CustomerCard
-                  key={`${customer.profile_name}-${customer.created_at}-${index}`}
-                  customer={customer}
-                />
+              {filteredCustomers.map((customer) => (
+                <CustomerCard key={customer.customer_id} customer={customer} />
               ))}
             </div>
           )}

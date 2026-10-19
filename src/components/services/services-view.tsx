@@ -9,10 +9,10 @@ import {
 
 import { Check, Clock3, Pencil, Plus, Search, Scissors, X } from "lucide-react";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-import { initialServices } from "@/data/mocks/services";
-import { Service } from "@/types/service";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import type { CatalogService as Service } from "@/types/service";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -32,15 +32,45 @@ const emptyForm: ServiceForm = {
   price: "",
 };
 
-function formatCurrency(value: number) {
+function formatCurrency(value: number | string) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value);
+  }).format(Number(value));
 }
 
 export function ServicesView() {
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [pendingService, setPendingService] = useState<Service | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const actionInFlight = useRef(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/services", { signal: controller.signal })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok)
+          throw new Error(
+            body.message ?? "Não foi possível carregar os serviços.",
+          );
+        setServices(body as Service[]);
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted)
+          setError(cause instanceof Error ? cause.message : "Erro de conexão.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   const [search, setSearch] = useState("");
 
@@ -62,26 +92,26 @@ export function ServicesView() {
 
       const matchesFilter =
         filter === "all" ||
-        (filter === "active" && service.active) ||
-        (filter === "inactive" && !service.active);
+        (filter === "active" && service.status === "ativo") ||
+        (filter === "inactive" && service.status === "inativo");
 
       return matchesSearch && matchesFilter;
     });
   }, [services, search, filter]);
 
   const stats = useMemo(() => {
-    const active = services.filter((service) => service.active);
+    const active = services.filter((service) => service.status === "ativo");
 
     const averagePrice =
       active.length > 0
-        ? active.reduce((total, service) => total + service.price, 0) /
+        ? active.reduce((total, service) => total + Number(service.price), 0) /
           active.length
         : 0;
 
     const averageDuration =
       active.length > 0
         ? active.reduce(
-            (total, service) => total + service.durationMinutes,
+            (total, service) => total + service.duration_minutes,
             0,
           ) / active.length
         : 0;
@@ -95,22 +125,37 @@ export function ServicesView() {
   }, [services]);
 
   function openCreateModal() {
+    setError(null);
+    setSuccess(null);
     setEditingService(null);
     setForm(emptyForm);
     setModalOpen(true);
   }
 
-  function openEditModal(service: Service) {
-    setEditingService(service);
-
-    setForm({
-      name: service.name,
-      description: service.description ?? "",
-      durationMinutes: String(service.durationMinutes),
-      price: String(service.price),
-    });
-
-    setModalOpen(true);
+  async function openEditModal(service: Service) {
+    setError(null);
+    setSuccess(null);
+    setLoadingDetailId(service.id);
+    try {
+      const response = await fetch(`/api/services/${service.id}`);
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.message ?? "Não foi possível abrir o serviço.");
+      }
+      const detail = body as Service;
+      setEditingService(detail);
+      setForm({
+        name: detail.name,
+        description: detail.description ?? "",
+        durationMinutes: String(detail.duration_minutes),
+        price: detail.price,
+      });
+      setModalOpen(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Erro de conexão.");
+    } finally {
+      setLoadingDetailId(null);
+    }
   }
 
   function closeModal() {
@@ -122,66 +167,113 @@ export function ServicesView() {
     }, 200);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const name = form.name.trim();
 
     const durationMinutes = Number(form.durationMinutes);
 
-    const price = Number(form.price.replace(",", "."));
+    const normalized = form.price.trim().replace(",", ".");
+    const [whole, fraction = ""] = normalized.split(".");
+    const price = `${whole}.${fraction.padEnd(2, "0")}`;
 
     if (
       !name ||
-      !Number.isFinite(durationMinutes) ||
+      !Number.isInteger(durationMinutes) ||
       durationMinutes <= 0 ||
-      !Number.isFinite(price) ||
-      price < 0
+      durationMinutes > 1440 ||
+      !/^(0|[1-9]\d{0,7})\.\d{2}$/.test(price)
     ) {
+      setError(
+        "Informe nome, preço decimal válido e duração de 1 a 1440 minutos.",
+      );
       return;
     }
 
-    if (editingService) {
-      setServices((current) =>
-        current.map((service) =>
-          service.id === editingService.id
-            ? {
-                ...service,
-                name,
-                description: form.description.trim(),
-                durationMinutes,
-                price,
-              }
-            : service,
-        ),
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await fetch(
+        editingService ? `/api/services/${editingService.id}` : "/api/services",
+        {
+          method: editingService ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            description: form.description.trim() || null,
+            duration_minutes: durationMinutes,
+            price,
+          }),
+        },
       );
-    } else {
-      const newService: Service = {
-        id: crypto.randomUUID(),
-        name,
-        description: form.description.trim(),
-        durationMinutes,
-        price,
-        active: true,
-      };
-
-      setServices((current) => [newService, ...current]);
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.message ?? "Não foi possível salvar o serviço.");
+      const saved = body as Service;
+      setServices((current) =>
+        editingService
+          ? current.map((item) => (item.id === saved.id ? saved : item))
+          : [...current, saved],
+      );
+      setSuccess(
+        editingService
+          ? "Serviço atualizado com sucesso."
+          : "Serviço criado com sucesso.",
+      );
+      closeModal();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Erro de conexão.");
+    } finally {
+      setSaving(false);
     }
-
-    closeModal();
   }
 
-  function toggleService(serviceId: string) {
-    setServices((current) =>
-      current.map((service) =>
-        service.id === serviceId
-          ? {
-              ...service,
-              active: !service.active,
-            }
-          : service,
-      ),
-    );
+  function requestToggle(service: Service) {
+    if (actionInFlight.current) return;
+    setActionError(null);
+    setPendingService(service);
+  }
+
+  async function toggleService() {
+    const current = pendingService;
+    if (!current || actionInFlight.current) return;
+    actionInFlight.current = true;
+    setError(null);
+    setSuccess(null);
+    setActionError(null);
+    setTogglingId(current.id);
+    try {
+      const response = await fetch(`/api/services/${current.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: current.status === "ativo" ? "inativo" : "ativo",
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.message ?? "Não foi possível alterar o status.");
+      setServices((items) =>
+        items.map((item) =>
+          item.id === current.id ? (body as Service) : item,
+        ),
+      );
+      setSuccess(
+        current.status === "ativo"
+          ? "Serviço desativado."
+          : "Serviço reativado.",
+      );
+      setPendingService(null);
+    } catch (cause) {
+      setActionError(
+        cause instanceof Error ? cause.message : "Erro de conexão.",
+      );
+    } finally {
+      actionInFlight.current = false;
+      setTogglingId(null);
+    }
   }
 
   return (
@@ -231,6 +323,21 @@ export function ServicesView() {
             Novo serviço
           </motion.button>
         </section>
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-red-400">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p role="status" className="mt-4 text-sm text-emerald-400">
+            {success}
+          </p>
+        )}
+        {loadingDetailId && (
+          <p role="status" className="mt-2 text-xs text-[var(--muted)]">
+            Carregando detalhe do serviço...
+          </p>
+        )}
 
         {/* INDICADORES */}
 
@@ -309,7 +416,12 @@ export function ServicesView() {
 
         <section className="mt-5">
           <AnimatePresence mode="popLayout">
-            {filteredServices.length === 0 ? (
+            {loading ? (
+              <p className="text-sm text-[var(--muted)]">
+                Carregando serviços...
+              </p>
+            ) : error &&
+              services.length === 0 ? null : filteredServices.length === 0 ? (
               <motion.div
                 key="empty"
                 initial={{
@@ -330,11 +442,15 @@ export function ServicesView() {
                 </div>
 
                 <h2 className="mt-4 text-sm font-semibold">
-                  Nenhum serviço encontrado
+                  {services.length === 0
+                    ? "Nenhum serviço cadastrado"
+                    : "Nenhum serviço encontrado"}
                 </h2>
 
                 <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--muted)]">
-                  Tente alterar os filtros ou cadastrar um novo serviço.
+                  {services.length === 0
+                    ? "Cadastre o primeiro serviço para começar."
+                    : "Tente alterar os filtros selecionados."}
                 </p>
               </motion.div>
             ) : (
@@ -348,8 +464,12 @@ export function ServicesView() {
                       key={service.id}
                       service={service}
                       index={index}
-                      onEdit={() => openEditModal(service)}
-                      onToggle={() => toggleService(service.id)}
+                      onEdit={() => void openEditModal(service)}
+                      onToggle={() => requestToggle(service)}
+                      busy={
+                        togglingId === service.id ||
+                        loadingDetailId === service.id
+                      }
                     />
                   ))}
                 </AnimatePresence>
@@ -378,6 +498,35 @@ export function ServicesView() {
         >
           <Plus size={24} />
         </motion.button>
+
+        <ConfirmDialog
+          open={pendingService !== null}
+          title={
+            pendingService?.status === "ativo"
+              ? "Desativar serviço"
+              : "Reativar serviço"
+          }
+          description={
+            pendingService?.status === "ativo"
+              ? `Tem certeza que deseja desativar "${pendingService.name}"?\nO serviço permanecerá cadastrado e poderá ser reativado depois.`
+              : `Tem certeza que deseja reativar "${pendingService?.name ?? ""}"?\nO serviço voltará a ficar disponível para atendimentos.`
+          }
+          confirmLabel={
+            pendingService?.status === "ativo"
+              ? "Desativar serviço"
+              : "Reativar serviço"
+          }
+          variant={
+            pendingService?.status === "ativo" ? "destructive" : "default"
+          }
+          isLoading={togglingId !== null}
+          error={actionError}
+          onConfirm={() => void toggleService()}
+          onCancel={() => {
+            setPendingService(null);
+            setActionError(null);
+          }}
+        />
 
         {/* MODAL */}
 
@@ -539,6 +688,11 @@ export function ServicesView() {
                   </div>
                 </div>
 
+                {error && (
+                  <p role="alert" className="mt-4 text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
                 <div className="mt-7 flex gap-3">
                   <motion.button
                     type="button"
@@ -553,6 +707,7 @@ export function ServicesView() {
 
                   <motion.button
                     type="submit"
+                    disabled={saving}
                     whileHover={{
                       scale: 1.01,
                     }}
@@ -580,11 +735,13 @@ function ServiceCard({
   index,
   onEdit,
   onToggle,
+  busy,
 }: {
   service: Service;
   index: number;
   onEdit: () => void;
   onToggle: () => void;
+  busy: boolean;
 }) {
   return (
     <motion.article
@@ -617,7 +774,7 @@ function ServiceCard({
         <div className="flex min-w-0 items-center gap-3">
           <div
             className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
-              service.active
+              service.status === "ativo"
                 ? "bg-[var(--primary-soft)] text-[var(--primary)]"
                 : "bg-white/5 text-[var(--muted)]"
             }`}
@@ -631,16 +788,18 @@ function ServiceCard({
             <div className="mt-1 flex items-center gap-1.5">
               <span
                 className={`size-1.5 rounded-full ${
-                  service.active ? "bg-emerald-400" : "bg-zinc-500"
+                  service.status === "ativo" ? "bg-emerald-400" : "bg-zinc-500"
                 }`}
               />
 
               <span
                 className={`text-[10px] ${
-                  service.active ? "text-emerald-400" : "text-[var(--muted)]"
+                  service.status === "ativo"
+                    ? "text-emerald-400"
+                    : "text-[var(--muted)]"
                 }`}
               >
-                {service.active ? "Ativo" : "Inativo"}
+                {service.status === "ativo" ? "Ativo" : "Inativo"}
               </span>
             </div>
           </div>
@@ -671,7 +830,7 @@ function ServiceCard({
           </div>
 
           <p className="mt-2 text-sm font-semibold">
-            {service.durationMinutes} min
+            {service.duration_minutes} min
           </p>
         </div>
 
@@ -690,16 +849,21 @@ function ServiceCard({
         <motion.button
           type="button"
           onClick={onToggle}
+          disabled={busy}
           whileTap={{
             scale: 0.98,
           }}
-          className={`flex h-10 w-full items-center justify-center rounded-xl text-xs font-medium transition ${
-            service.active
+          className={`flex h-10 w-full items-center justify-center rounded-xl text-xs font-medium transition disabled:opacity-50 ${
+            service.status === "ativo"
               ? "bg-red-500/5 text-red-400 hover:bg-red-500/10"
               : "bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
           }`}
         >
-          {service.active ? "Desativar serviço" : "Ativar serviço"}
+          {busy
+            ? "Aguarde..."
+            : service.status === "ativo"
+              ? "Desativar serviço"
+              : "Reativar serviço"}
         </motion.button>
       </div>
     </motion.article>

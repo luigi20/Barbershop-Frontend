@@ -12,8 +12,9 @@ type MembersState =
   | { status: "forbidden"; members: EntityMembershipListItem[]; error: string }
   | { status: "error"; members: EntityMembershipListItem[]; error: string };
 
-export function useMembers(): MembersState {
+export function useMembers(): MembersState & { reload: () => void } {
   const router = useRouter();
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<MembersState>({
     status: "loading",
     members: [],
@@ -59,7 +60,7 @@ export function useMembers(): MembersState {
       });
 
     return () => controller.abort();
-  }, [router]);
+  }, [router, reloadKey]);
 
-  return state;
+  return { ...state, reload: () => setReloadKey((key) => key + 1) };
 }

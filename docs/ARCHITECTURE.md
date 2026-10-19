@@ -1,5 +1,11 @@
 # ARCHITECTURE.md — BarberPro Frontend
 
+> Atualização M0.4: **CONFIRMADO:** Dashboard P5 usa service same-origin e os BFFs existentes. `useCurrentUser` determina o fluxo por role: administrador usa summary, upcoming e timeseries; recepcionista usa operations e upcoming. O gráfico usa a data civil de summary e a lista usa a timezone de upcoming. **A CONFIRMAR:** comportamento em runtime com backend P5.
+
+> Atualização M0: **CONFIRMADO:** Availability usa a arquitetura Browser → BFF → NestJS existente. `withAuthRoute` protege as rotas P3 e `management-bff.server.ts` encaminha GET/POST/PUT/DELETE. A UI administrativa fica em `/configuracoes/horarios`, reutilizando os editores de fuso, jornada e bloqueios; a Entity da sessão backend define o tenant.
+
+> Atualização 2026-10-02: a arquitetura Browser → BFF → NestJS foi preservada. Profile, Entity, Members, Customers e Services têm rotas BFF de gestão; veja [INTEGRATION_SMOKE.md](./INTEGRATION_SMOKE.md). As seções abaixo refletem a baseline histórica de 2026-09-04.
+
 > Última atualização: 2026-09-04.
 
 ## Stack
@@ -55,7 +61,7 @@ src/
 - **CONFIRMADO:** autenticação e leitura de Profile possuem integração BFF.
 - **CONFIRMADO:** Clientes possui integração read-only isolada pela Entity da sessão através do BFF.
 - **CONFIRMADO:** Equipe possui integração read-only por `GET /api/members`; o tenant continua derivado da sessão no backend.
-- **CONFIRMADO:** Dashboard não possui integração de domínio utilizável e preserva dados inline.
+- **CONFIRMADO:** Dashboard P5 usa BFF de domínio e exibe dados reais quando as respostas estão disponíveis.
 - **BLOQUEADO:** integração real de Agenda depende de backend HTTP utilizável para Appointment/Schedule.
 - **BLOQUEADO:** integração real de Serviços depende de API HTTP utilizável para Service.
 - **BLOQUEADO:** integração real de Financeiro depende de backend HTTP utilizável para Payment/Finance.

@@ -13,6 +13,7 @@ import { motion, MotionConfig } from "motion/react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { formatProfileRole } from "@/lib/profile";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { ProfileEditor } from "@/components/profile/profile-editor";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -98,9 +99,11 @@ export function ProfileView() {
             Meu perfil
           </h1>
           <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
-            Consulte seus dados pessoais e funções no BarberPro.
+            Consulte e atualize seus dados pessoais no BarberPro.
           </p>
         </section>
+
+        <ProfileEditor profile={profile} />
 
         <section className="relative mt-6 overflow-hidden rounded-3xl border border-[var(--border-soft)] bg-[var(--surface)] p-5 sm:p-7">
           <div className="absolute -right-16 -top-20 size-56 rounded-full bg-[var(--primary)]/8 blur-3xl" />
@@ -221,10 +224,10 @@ export function ProfileView() {
               </div>
             </div>
             <div className="mt-6 rounded-xl border border-dashed border-[var(--border)] bg-[var(--background)]/40 p-4">
-              <p className="text-sm font-medium">Edição indisponível</p>
+              <p className="text-sm font-medium">Edição disponível</p>
               <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-                A atualização dos dados será liberada quando a persistência do
-                perfil estiver disponível com segurança.
+                Atualize nome, telefone, foto e data de nascimento no formulário
+                acima. O email permanece somente leitura.
               </p>
             </div>
           </article>

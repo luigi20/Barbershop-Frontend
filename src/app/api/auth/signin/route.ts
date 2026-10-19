@@ -115,6 +115,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         maxAge: CHALLENGE_COOKIE_MAX_AGE,
       },
     );
+  } else {
+    response.cookies.set("entities_hint", "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
   }
 
   return response;

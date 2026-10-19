@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const profile: MeProfile = {
       id: backendProfile.id,
       identity_id: backendProfile.identity_id,
+      email: backendProfile.email ?? null,
       name: backendProfile.name,
       photo: backendProfile.photo ?? null,
       phone: backendProfile.phone ?? null,

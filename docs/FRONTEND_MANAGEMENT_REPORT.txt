@@ -1,0 +1,223 @@
+BARBERPRO - RELATORIO DE CONCLUSAO DA INTERFACE DE GESTAO
+Data: 2026-10-02
+Branch: feat/members-list
+Backend: http://localhost:3333
+
+1. CHECKPOINT INICIAL
+
+CONFIRMADO: a arvore de trabalho ja continha alteracoes nao commitadas de
+integracao antes desta fase. Foram preservadas. O Browser usa o Next.js BFF;
+os Route Handlers chamam o NestJS. Access e refresh permanecem em cookies
+HttpOnly. Nao foi necessaria mudanca arquitetural.
+
+2. FUNCIONALIDADES JA EXISTENTES ANTES DESTA FASE
+
+PROFILE: GET real, editor com PUT parcial, email somente leitura.
+ENTITY: GET/PUT de /entity/current e formulario da propria barbearia.
+MEMBERS: list, detail por profile_id, create, update de roles/status e
+desativacao por status local. A lista tinha loading, empty e error.
+CUSTOMERS: list, detail por customer_id, create, update de notes/status e
+desativacao por status local. A lista tinha loading, empty e error.
+SERVICES: list, detail, create, update e ativacao/desativacao reais pelo BFF;
+preco string decimal e duracao inteira.
+
+3. FUNCIONALIDADES IMPLEMENTADAS AGORA
+
+CONFIRMADO no codigo: listas de Members e Customers sao recarregadas por GET
+real depois de create/update, sem item otimista e sem reload da pagina.
+Foram acrescentados loading de detalhe, mensagens de sucesso e tratamento
+visivel de erros nos gerenciadores. A desativacao de Member pede confirmacao
+visual. Services agora distingue erro inicial de lista vazia, mostra loading
+de detalhe, saving/status da acao e sucesso; a desativacao pede confirmacao.
+Entity mostra sucesso e sincroniza o formulario com o response do backend.
+Mensagens obsoletas de indisponibilidade em Members e Profile foram corrigidas.
+
+4. MEMBERS
+
+List: GET /api/members, cards reais, filtros, loading, empty e error.
+Detail: GET /api/members/:profileId; indicador de loading e erro visivel.
+Create: formulario existente segue o DTO do Route Handler: email, password,
+name, phone, photo opcional, birth_date e roles. A senha inicial e visivel.
+Roles: administrador, recepcionista, barbeiro; recepcionista nao recebe
+administrador como opcao. O backend permanece autoridade de autorizacao.
+Update: PUT por profile_id, somente roles/status editaveis. Nenhum
+membership_id, email, Identity.status ou entity_id arbitrario e enviado.
+Deactivate: status inativo, sem DELETE e com confirmacao visual.
+Apos salvar: GET real atualiza a lista; sucesso e erro ficam visiveis.
+
+5. CUSTOMERS
+
+List: GET /api/customers, cards reais, busca, loading, empty e error.
+Detail: GET /api/customers/:customerId; indicador de loading e erro visivel.
+Create: formulario existente segue o DTO do Route Handler; o backend resolve
+Identity nova/existente e Customer existente. O BFF trata validacao e o
+gerenciador exibe mensagens para 403, 409 e demais erros retornados.
+Update: PUT por customer_id, somente notes/status locais editaveis.
+Deactivate: status inativo, sem DELETE. Nao se presume customer_id = profile_id.
+Apos salvar: GET real atualiza a lista; sucesso e erro ficam visiveis.
+
+6. SERVICES
+
+List: GET /api/services; ativos e inativos sao mantidos na lista e filtraveis.
+Card: nome, descricao quando existe, preco em BRL, duracao e status.
+Detail: GET /api/services/:id com indicador de loading e erro visivel.
+Create: name, description opcional, price string decimal e duration_minutes
+inteiro de 1 a 1440. Nao envia id, entity_id, status ou timestamps.
+Update: PUT por Service.id; nao modifica entity_id.
+Deactivate/reactivate: PUT com status inativo/ativo; sem DELETE. O rotulo
+da UI e "Desativar servico"/"Reativar servico". O response real substitui o
+registro local. Erro inicial nao e apresentado como lista vazia.
+CONFIRMADO: o contrato TypeScript preserva price como string; a conversao
+para number ocorre apenas na formatacao e no calculo de indicadores da UI.
+
+7. PROFILE
+
+CONFIRMADO: o editor existente envia name, phone, photo_url e birth_date ao
+BFF; email e exibido somente para leitura. Nenhum upload ou troca de email
+foi implementado. O aviso visual incorreto de edicao indisponivel foi
+substituido por texto coerente com o formulario. O editor existente recarrega
+a pagina apos PUT bem-sucedido para atualizar o Profile exibido.
+
+8. ENTITY
+
+CONFIRMADO: a tela existente usa GET/PUT /api/entity/current, sem seletor de
+entity_id. O tenant vem da sessao. A fase acrescentou mensagem de sucesso e
+sincronizacao do formulario com o response apos salvar. O status e exibido,
+sem novo bloqueio para PENDENTE.
+
+9. BFF ALTERADO NESTA FASE
+
+Nenhum Route Handler ou helper de auth/HTTP foi modificado nesta fase.
+As telas continuam usando as rotas BFF existentes e seu refresh rotativo.
+
+10. ROUTE HANDLERS CRIADOS NESTA FASE
+
+Nenhum. Os Route Handlers de Profile, Entity, Members, Customers e Services
+ja existiam na arvore de trabalho antes desta fase.
+
+11. TYPES
+
+Nenhum type novo ou alterado nesta fase. Foram reutilizados MeProfile,
+CurrentEntity, EntityMembershipListItem, EntityCustomer e CatalogService.
+
+12. FORMS
+
+Foram reutilizados MemberManager, CustomerManager, ServicesView,
+ProfileEditor e EntityView. Nenhum campo de API foi inventado.
+
+13. MOCKS REMOVIDOS NESTA FASE
+
+Nenhum arquivo removido. A tela /servicos ja usava dados reais ao inicio
+desta fase; os arquivos de mock foram preservados.
+
+14. MOCKS RESTANTES
+
+CONFIRMADO: Agenda importa src/data/mocks/agenda.ts.
+src/data/mocks/services.ts e src/data/mocks/customers.ts continuam no
+repositorio, mas nao alimentam as telas atuais de Services e Customers.
+Dashboard usa dados inline. Componentes legados ClientFormModal e
+ClientDetailDrawer existem, mas nao sao usados pela tela atual de Customers.
+
+15. MFA
+
+BLOQUEADO - backend ainda nao estabilizado para o fluxo de MFA.
+Nenhuma integracao ou workaround de MFA foi criada. Google, Agenda,
+Availability e novo Dashboard ficaram fora do escopo.
+
+16. LINT
+
+npm run lint: passou (exit code 0).
+
+17. PRETTIER
+
+npm run lint:prettier:check: passou (exit code 0).
+
+18. BUILD
+
+npm run build: passou, incluindo compilacao e TypeScript (exit code 0).
+
+19. GIT DIFF --CHECK
+
+git diff --check: passou (exit code 0). O Git exibiu avisos de conversao
+LF/CRLF em arquivos ja modificados, sem erros de whitespace.
+Nao houve commit, push, pull, merge, rebase, reset, clean, stash ou troca
+de branch.
+
+20. ROTEIRO MANUAL COMPLETO
+
+Usar conta local de teste autorizada e conferir respostas no Network.
+MEMBERS:
+ [ ] listar membros reais
+ [ ] abrir detail por profile_id
+ [ ] criar membro com senha inicial e roles permitidas; verificar 201
+ [ ] editar roles e verificar lista atualizada pelo GET
+ [ ] desativar: cancelar confirmacao e confirmar; verificar status inativo
+ [ ] repetir create para validar 409 de duplicidade
+ [ ] usar recepcionista para validar ausencia da role administrador na UI e
+     resposta 403 do backend em operacao nao autorizada
+CUSTOMERS:
+ [ ] listar clientes reais
+ [ ] abrir detail por customer_id
+ [ ] criar cliente; verificar 201
+ [ ] editar dados locais permitidos
+ [ ] alterar notes e conferir persistencia apos novo GET
+ [ ] desativar com status inativo; conferir permanencia na lista
+ [ ] repetir create para validar 409 de vinculo existente
+SERVICES:
+ [ ] validar estado de lista vazia no tenant sem servicos
+ [ ] criar "Corte Masculino", price "35.00", duration_minutes 45
+ [ ] abrir detalhe pelo id retornado
+ [ ] editar price para "40.00"
+ [ ] editar duration_minutes para 60
+ [ ] desativar com status inativo
+ [ ] conferir que o registro continua na lista, inclusive no filtro inativos
+ [ ] reativar com status ativo
+PROFILE:
+ [ ] carregar Profile e conferir email somente leitura
+ [ ] editar campo permitido
+ [ ] recarregar pagina e conferir persistencia
+ENTITY:
+ [ ] carregar Entity current
+ [ ] editar campo permitido e conferir mensagem de sucesso
+ [ ] recarregar pagina e conferir persistencia e mesmo tenant
+
+21. BUGS DO BACKEND ENCONTRADOS
+
+CONFIRMADO no smoke anterior: Services list/create/detail retornaram 500
+Internal server error; log apontou PrismaClientValidationError:
+Unknown argument entity_id, associado a Prisma Client anterior ao schema P2.
+A CONFIRMAR: o contêiner NestJS foi reiniciado depois; sem sessao de teste
+autenticada nesta fase, nao foi possivel afirmar que o 500 ainda persiste.
+Nenhum bug novo do backend foi comprovado nesta fase.
+
+22. BUGS DO FRONTEND ENCONTRADOS
+
+CONFIRMADO: avisos de indisponibilidade contradiziam formularios ativos;
+Members e Customers recarregavam a pagina apos salvar e perdiam o estado de
+sucesso; detalhe nao tinha loading; desativacao de Member nao pedia
+confirmacao; Services podia mostrar lista vazia apos erro de GET. Corrigidos.
+
+23. ARQUIVOS MODIFICADOS NESTA FASE
+
+src/hooks/use-members.ts
+src/hooks/use-customers.ts
+src/components/members/members-view.tsx
+src/components/members/member-manager.tsx
+src/components/clients/clients-view.tsx
+src/components/clients/customer-manager.tsx
+src/components/services/services-view.tsx
+src/components/entity/entity-view.tsx
+src/components/profile/profile-view.tsx
+docs/FRONTEND_MANAGEMENT_REPORT.txt (este arquivo)
+
+24. PROXIMO PASSO RECOMENDADO
+
+Executar o roteiro autenticado com conta local de teste, especialmente o
+fluxo completo de Services apos o reinicio do NestJS. Se o 500 persistir,
+verificar Prisma Client e migration P2 no repositorio do backend.
+
+25. ESTADO DO RELATORIO
+
+Este arquivo .txt foi criado conforme solicitado. Operacoes autenticadas
+nao foram repetidas nesta fase por falta de credenciais/fixture de teste;
+lint, Prettier, build e revisao estatica do diff foram executados.

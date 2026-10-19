@@ -1,5 +1,15 @@
 # CURRENT_STATE.md — BarberPro Frontend
 
+> Atualização M0.6: **CONFIRMADO:** Agenda administrativa inicia em Próximos, consultando uma vez o intervalo do início do dia civil atual da Entity até o início do dia 30 dias depois. Hoje e Calendário preservam a consulta por dia; as listas agrupam por data e abrem o detalhe P4. O Calendário destaca, quando disponíveis, datas encontradas na consulta de Próximos, sem requisições por dia. Dashboard vincula próximos atendimentos ao detalhe e abre o fluxo real de novo agendamento. **PLANEJADO:** paginação por cursor para históricos grandes; não faz parte do MVP. **A CONFIRMAR:** usabilidade visual e runtime autenticado no piloto.
+
+> Atualização M0.4: **CONFIRMADO:** Dashboard P5 integrado em código. Administrador consome summary, upcoming e timeseries; recepcionista consome operations e upcoming. A tela exibe contagens, receita operacional, próximos atendimentos e gráfico com dados P5, sem valores inline ou mock de Dashboard. **A CONFIRMAR:** runtime com backend P5 e contas reais; veja [P5_DASHBOARD_MANUAL_CHECKLIST.md](./P5_DASHBOARD_MANUAL_CHECKLIST.md). Top Services e Financeiro não fazem parte desta entrega.
+
+> Atualização M0.3: **CONFIRMADO:** Agenda usa listagem, disponibilidade, detalhe, criação, reagendamento, cancelamento e conclusão via BFF P4; o mock de Agenda não alimenta mais a tela. Datas da listagem são convertidas do dia local da Entity para instantes. **A CONFIRMAR:** runtime com backend e permissões por role, especialmente leitura de timezone por barbeiro. A seção histórica abaixo permanece como registro da baseline anterior.
+
+> Atualização M0: **CONFIRMADO:** o bug de navegação multi-Entity foi corrigido usando `entities_hint` na página; o challenge JWT continua restrito ao BFF. Availability P3 está integrada em `/configuracoes/horarios` para administrador, com fuso da Entity, expediente, jornadas por `profile_id` e bloqueios. **A CONFIRMAR:** checklist de auth e Availability com backend real. **BLOQUEADO:** MFA.
+
+> Atualização 2026-10-02: P0/P1/P2 foram conectados ao BFF para Profile, Entity, Members, Customers e Services. As seções abaixo registram a auditoria histórica de 2026-09-04 e não descrevem os contratos atuais desses módulos. Consulte [INTEGRATION_SMOKE.md](./INTEGRATION_SMOKE.md) para o estado e o roteiro atuais.
+
 > Última atualização: 2026-09-04. O código atual do frontend é a autoridade deste documento.
 
 ## Estado confirmado
@@ -15,7 +25,7 @@
 - **BLOQUEADO:** edição de Profile enquanto `ProfileRepository.update` atualizar incorretamente Identity e não persistir Profile de forma confiável.
 - **CONFIRMADO:** `/equipe` lista Memberships reais em modo read-only por `GET /api/members`, com busca e filtros locais.
 - **CONFIRMADO:** não existe tela de detalhes de membro ou planos.
-- **CONFIRMADO:** Agenda e Serviços usam mocks; Dashboard usa dados inline; Financeiro não possui rota implementada.
+- **CONFIRMADO:** Dashboard usa respostas P5; Financeiro não possui rota implementada. O estado atual de Agenda e Serviços está descrito nas atualizações acima.
 - **CONFIRMADO:** `src/services/auth.client.ts`, `src/hooks/use-current-user.ts`, `src/lib/http.server.ts` e `src/lib/auth-route.server.ts` existem.
 
 ## Problemas encontrados na auditoria
@@ -54,7 +64,7 @@
 
 - **CONFIRMADO:** `agenda.ts` e `services.ts` permanecem em uso e devem ser preservados porque não há API integrável.
 - **CONFIRMADO:** `customers.ts` foi preservado, mas não alimenta mais `/clientes`; nenhum mock foi removido.
-- **CONFIRMADO:** `dashboard.ts` existe, mas a página usa dados inline.
+- **CONFIRMADO:** o mock `dashboard.ts` sem consumidores foi removido após a integração P5.
 - **CONFIRMADO:** `appoiments.ts` e `professionals.ts` são placeholders vazios.
 
 ## Bloqueios do backend

@@ -15,8 +15,9 @@ type CustomersState =
   | { status: "forbidden"; customers: EntityCustomer[]; error: string }
   | { status: "error"; customers: EntityCustomer[]; error: string };
 
-export function useCustomers(): CustomersState {
+export function useCustomers(): CustomersState & { reload: () => void } {
   const router = useRouter();
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<CustomersState>({
     status: "loading",
     customers: [],
@@ -62,7 +63,7 @@ export function useCustomers(): CustomersState {
       });
 
     return () => controller.abort();
-  }, [router]);
+  }, [router, reloadKey]);
 
-  return state;
+  return { ...state, reload: () => setReloadKey((key) => key + 1) };
 }

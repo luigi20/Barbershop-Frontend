@@ -26,6 +26,7 @@ Documentação técnica em: docs/
 - Preservar os padrões de nomenclatura existentes (kebab-case para arquivos, PascalCase para componentes).
 - Reutilizar o utilitário `cn()` de `lib/utils.ts` para composição de classes Tailwind.
 - Manter o padrão de named exports para componentes.
+- Nunca usar alert(), confirm() ou prompt() nativos na UI; usar os componentes de feedback do design system.
 - Não inventar endpoints, contratos de API ou formatos de dados sem confirmar com o backend.
 - Não introduzir bibliotecas novas sem necessidade clara e aprovação.
 - Não fazer grandes refactors sem necessidade identificada.

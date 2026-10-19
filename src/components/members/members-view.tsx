@@ -15,6 +15,7 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { useMembers } from "@/hooks/use-members";
 import { formatProfileRole } from "@/lib/profile";
 import type { EntityMembershipListItem } from "@/types/entity-membership";
+import { MemberManager } from "@/components/members/member-manager";
 
 const smoothEase = [0.22, 1, 0.36, 1] as const;
 
@@ -87,7 +88,7 @@ function MemberCard({ member }: { member: EntityMembershipListItem }) {
 }
 
 export function MembersView() {
-  const { status, members, error } = useMembers();
+  const { status, members, error, reload } = useMembers();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -114,7 +115,8 @@ export function MembersView() {
         [member.profile_name, member.phone, member.status, ...member.roles]
           .filter((value): value is string => Boolean(value))
           .some((value) => value.toLocaleLowerCase("pt-BR").includes(term));
-      const matchesRole = !roleFilter || member.roles.includes(roleFilter);
+      const matchesRole =
+        !roleFilter || member.roles.some((role) => role === roleFilter);
       const matchesStatus = !statusFilter || member.status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
@@ -140,10 +142,11 @@ export function MembersView() {
           <p className="mt-1 max-w-lg text-sm text-[var(--muted)]">
             Consulte os membros vinculados ao ambiente atual.
           </p>
-          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-            Gerenciamento de membros e funções está indisponível nesta versão.
-          </p>
         </section>
+
+        {status === "success" && (
+          <MemberManager members={members} onSaved={reload} />
+        )}
 
         <section className="mt-6 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 sm:p-5">
           <p className="text-xs text-[var(--muted)]">Membros carregados</p>
@@ -252,12 +255,8 @@ export function MembersView() {
 
           {status === "success" && filteredMembers.length > 0 && (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {/* Composite key is render-only; the API exposes no domain ID. */}
-              {filteredMembers.map((member, index) => (
-                <MemberCard
-                  key={`${member.profile_name ?? ""}-${member.phone ?? ""}-${member.roles.join("|")}-${member.status}-${index}`}
-                  member={member}
-                />
+              {filteredMembers.map((member) => (
+                <MemberCard key={member.profile_id} member={member} />
               ))}
             </div>
           )}
